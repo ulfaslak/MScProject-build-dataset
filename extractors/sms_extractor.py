@@ -54,13 +54,13 @@ class Sms_extractor:
             self.users = set(self.df_sms['user'])
             
             # Save
-            print "... succes! Saving."
-            self.df_sms.to_pickle(ROOTPATH + '/data/%sdf_sms.pickle' % auxlabel)
+            print "...succes! Saving."
+            self.df_sms.to_pickle(ROOTPATH + '/data_cache/%sdf_sms.pickle' % auxlabel)
             
         else:
             # Load
             print "[sms] Loading datasource from local."
-            self.df_sms = pd.read_pickle(ROOTPATH + '/data/%sdf_sms.pickle' % auxlabel)
+            self.df_sms = pd.read_pickle(ROOTPATH + '/data_cache/%sdf_sms.pickle' % auxlabel)
             self.users = set(self.df_sms['user'])
         
         print "[sms] Number of datapoints in range:", len(self.df_sms)

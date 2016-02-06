@@ -45,11 +45,11 @@ def load(spans, dataset):
     for y in years:
         print "<" + str(y) + ">",
         for m in months:
-            print m,
+            print m[:3],
             columns, data = loader.load_data(dataset, "%s_%d" % (m, y))
             dict_tmp = {}
             for column, array in zip(columns, data):
                 dict_tmp[column] = array
-                df = pd.concat([df, pd.DataFrame(dict_tmp)], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame(dict_tmp)], ignore_index=True)
                 
     return df

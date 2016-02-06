@@ -26,7 +26,9 @@ class Outlier_detector:
         Cleaned X matrix.
     """
     
-    def __init__(self, X, threshold=-0.5, visualize=False):
+    def __init__(self, X, visualize=False, threshold=-0.5, nu=0.1, kernel="rbf", gamma=None):
+        if gamma == None:
+            gamma = 1.0/X.shape[1]
         self.X = X
         self.threshold = threshold
         self.visualize = visualize
@@ -38,7 +40,7 @@ class Outlier_detector:
                 if j > i:
                     self.component_combinations.append((i,j))
                     
-        self.clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
+        self.clf = svm.OneClassSVM(nu=nu, kernel=kernel, gamma=gamma)
     
     
     def _compute_outliers(self):
@@ -63,40 +65,64 @@ class Outlier_detector:
     
     def _show_svm_plots(self):
         outliers = self._compute_outliers()
+        
+        NC = len(self.component_combinations)
+        
+        cols, rows = 3, np.ceil(NC/3.0)
+        plt.figure(figsize=(15,5*rows))
+        
         for i, combo in enumerate(self.component_combinations):
-            # Data generation
+            # Get feature pairs
             X = self.X[:,combo]
+            
+            # Fit OC-SVM to data
             self.clf.fit(X)
+            
+            # Get gridpoints for use in contour plots
             xx, yy = np.meshgrid(np.linspace(X[:,0].min()-2, X[:,0].max()+2, 500), 
                                  np.linspace(X[:,1].min()-2, X[:,1].max()+2, 500))
-                
 
-            plt.figure(figsize=(10, 5))
-
-            # plot the levels lines and the points
+            # Compute levels lines and points
             Z = self.clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
             
-            subplot = plt.subplot(1, 2, 1)
+            # Define plot location and set title
+            subplot = plt.subplot(rows,cols, i)
             subplot.set_title(combo)
+            
+            # Plot contours
             subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), self.threshold, 7),
                              cmap=plt.cm.Blues_r)
+            
+            # Plot orange 'in-class'-region
+            subplot.contourf(xx, yy, Z, levels=[0, Z.max()],
+                             colors='orange')
+            
+            # Plot threshold boundary
             a = subplot.contour(xx, yy, Z, levels=[self.threshold],
                                 linewidths=2, colors='red')
-            subplot.contourf(xx, yy, Z, levels=[self.threshold, Z.max()],
-                             colors='orange')
+            
+            # Plot margin region
+            subplot.contourf(xx, yy, Z, levels=[self.threshold,0],
+                             colors='blue', alpha=0.5)
+            
+            # Add points
             b = subplot.scatter(X[:, 0], X[:, 1], c='white')
             c = subplot.scatter(X[outliers, 0], X[outliers, 1], c='black')
+            
             subplot.axis('tight')
             subplot.legend(
                 [a.collections[0], b, c],
-                ['learned decision function', 'inliers', 'outliers'],
+                ['dec. func.', 'inliers', 'outliers'],
                 prop=matplotlib.font_manager.FontProperties(size=11))
+            
             subplot.set_xlim((X[:,0].min()-2, X[:,0].max()+2))
             subplot.set_ylim((X[:,1].min()-2, X[:,1].max()+2))
-        plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
+        #plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
 
         plt.show()
+        
+
         
         
     def main(self):

@@ -20,7 +20,7 @@ class Big_five_extractor:
         ROOTPATH = os.path.abspath('')
         
         try:
-            with open(ROOTPATH + '/data/questionnaire.json', 'r') as infile:
+            with open(ROOTPATH + '/data_cache/questionnaire.json', 'r') as infile:
                 dat = json.load(infile)
             print "[big_five_extractor] Loaded data from local copy!"
         except IOError:
@@ -29,7 +29,7 @@ class Big_five_extractor:
             print "[big_five_extractor] Loading data from API...",
             dat = rq.get("https://www.sensible.dtu.dk/sensible-dtu/connectors/connector_answer/v1/aggregate_questionnaire_question/get_aggregated_questionnaire_data/?bearer_token=%s&format=json&decrypted=false&form_version=90920167766cb9d5d5767b692b9d3acb&sortby=timestamp&order=1&limit=1000&" % token).json()
             print "... success!"
-            with open(ROOTPATH + '/data/questionnaire.json', 'w') as infile:
+            with open(ROOTPATH + '/data_cache/questionnaire.json', 'w') as infile:
                 json.dump(dat,infile)
             print "[big_five_extractor] Making local copy!"
                 

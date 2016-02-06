@@ -33,25 +33,25 @@ class Bluetooth_extractor:
             self.users = set(self.df_bluetooth['user'])
             
             # Save
-            print "... succes! Saving."
-            self.df_bluetooth.to_pickle(ROOTPATH + '/data/%sdf_bluetooth.pickle' % auxlabel)
+            print "...succes! Saving."
+            self.df_bluetooth.to_pickle(ROOTPATH + '/data_cache/%sdf_bluetooth.pickle' % auxlabel)
             
         else:
             # Load
             print "[bluetooth] Loading datasource from local."
-            self.df_bluetooth = pd.read_pickle(ROOTPATH + '/data/%sdf_bluetooth.pickle' % auxlabel)
+            self.df_bluetooth = pd.read_pickle(ROOTPATH + '/data_cache/%sdf_bluetooth.pickle' % auxlabel)
             self.users = set(self.df_bluetooth['user'])
         
         print "[bluetooth] Number of datapoints in range:", len(self.df_bluetooth)
         
         
-    def __compute_entropy(self, user):
+    def _compute_entropy(self, user):
         state_counter = Counter()
 
-        connections = list(self.df_bluetooth[self.df_bluetooth['user'] == user]['bt_mac'])
-        state_counter.update(connections)
+        states = list(self.df_bluetooth[self.df_bluetooth['user'] == user]['bt_mac'])
+        state_counter.update(states)
 
-        p = np.array(state_counter.values()) * 1.0/len(connections)
+        p = np.array(state_counter.values()) * 1.0/len(states)
         
         Ni = len(p); entropy = 0.0
         for j in range(Ni):
@@ -63,4 +63,10 @@ class Bluetooth_extractor:
         if user not in self.users:
             raise Exception('User %s not in dataset' % user)
             
-        return {'%sbluetooth_social_entropy' % self.auxlabel: self.__compute_entropy(user)}
+        datapoint = {'%sbluetooth_social_entropy' % self.auxlabel: self._compute_entropy(user)}
+        
+        # Add outlier conditions
+        if datapoint['%sbluetooth_social_entropy' % self.auxlabel] == 0:
+            raise Exception('[bluetooth] %d %sbluetooth_social_entropy is 0' % (user,self.auxlabel))
+            
+        return datapoint
