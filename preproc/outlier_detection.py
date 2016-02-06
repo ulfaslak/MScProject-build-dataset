@@ -22,8 +22,8 @@ class Outlier_detector:
         
     Output
     ------
-    X_clean : np.array
-        Cleaned X matrix.
+    outliers : list
+        List of outlier row indices
     """
     
     def __init__(self, X, visualize=False, threshold=-0.5, nu=0.1, kernel="rbf", gamma=None):
