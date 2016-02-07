@@ -1,1 +1,4 @@
 data_cache
+*.pyc
+.ipynb_checkpoints
+.DS_STORE
