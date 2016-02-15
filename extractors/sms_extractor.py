@@ -199,7 +199,7 @@ class Sms_extractor:
     
     def _compute_sms_traffic(self):
         messages = self.df_sms[self.df_sms['user']==self.user]
-        return {'%ssms_traffic' % self.auxlabel: len(messages)}
+        return {'%s[sms]_traffic' % self.auxlabel: len(messages)}
     
     def _compute_features_4_to_7(self):
         user_conversations = self.__compute_user_conversations()
@@ -247,44 +247,55 @@ class Sms_extractor:
         # compute feature 7
         fractions_of_conversations_started = conversations_started * 1.0/conversations_count
 
-        return {'%ssms_overall_responsiveness' % self.auxlabel: overall_responsiveness, 
-                '%ssms_overall_received_responsiveness' % self.auxlabel: overall_received_responsiveness, 
-                '%ssms_selectivity_in_responsiveness' % self.auxlabel: selectivity_in_responsiveness, 
-                '%ssms_fractions_of_conversations_started' % self.auxlabel: fractions_of_conversations_started}
+        return {'%s[sms]_overall_responsiveness' % self.auxlabel: overall_responsiveness, 
+                '%s[sms]_overall_received_responsiveness' % self.auxlabel: overall_received_responsiveness, 
+                '%s[sms]_selectivity_in_responsiveness' % self.auxlabel: selectivity_in_responsiveness, 
+                '%s[sms]_fractions_of_conversations_started' % self.auxlabel: fractions_of_conversations_started}
     
     
     def __transform_datapoint(self,datapoint):
         instructions = {
-            '%ssms_fractions_of_conversations_started' % self.auxlabel: (lambda x: x), 
-            '%ssms_traffic' % self.auxlabel: (lambda x: np.log(x)), 
-            '%ssms_overall_received_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
-            '%ssms_overall_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
-            '%ssms_selectivity_in_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001))
+            '%s[sms]_fractions_of_conversations_started' % self.auxlabel: (lambda x: x), 
+            '%s[sms]_traffic' % self.auxlabel: (lambda x: np.log(x)), 
+            '%s[sms]_overall_received_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
+            '%s[sms]_overall_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
+            '%s[sms]_selectivity_in_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001))
         }
         
         datapoint = dict((k, instructions[k](v)) for k,v in datapoint.items())
         
         return datapoint
                         
+        
+    def __filtering_condition(self, datapoint, feature, thr):
+        if feature in datapoint:
+            if datapoint[feature] <= 0:
+                raise Exception('[sms] %d %s is 0' % (self.user,feature))
 
     
     def main(self, user, transformed=True):
         if user not in self.users:
-            raise Exception('User %s not in dataset' % user)
+            raise Exception('[sms] User %s not in dataset' % user)
         
         self.user = user
         
-        datapoint_sms = {}
+        datapoint = {}
         
         extractors = [self._compute_sms_traffic(), 
                       self._compute_features_4_to_7()]
         
+        # Exclusion condition
         for i, ex in enumerate(extractors):
             if i in self.suppress:
                 continue
-            datapoint_sms.update(ex)
+            datapoint.update(ex)
+
+        # Add filtering conditions
+        self.__filtering_condition(datapoint, '%s[sms]_overall_received_responsiveness' % self.auxlabel, 0)
+        self.__filtering_condition(datapoint, '%s[sms]_overall_responsiveness' % self.auxlabel, 0)
+        self.__filtering_condition(datapoint, '%s[sms]_selectivity_in_responsiveness' % self.auxlabel, 0)   
             
         if transformed:
-            datapoint_sms = self.__transform_datapoint(datapoint_sms)        
+            datapoint = self.__transform_datapoint(datapoint)        
         
-        return datapoint_sms
+        return datapoint

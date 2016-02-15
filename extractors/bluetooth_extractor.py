@@ -45,10 +45,10 @@ class Bluetooth_extractor:
         print "[bluetooth] Number of datapoints in range:", len(self.df_bluetooth)
         
         
-    def _compute_entropy(self, user):
+    def _compute_entropy(self):
         state_counter = Counter()
 
-        states = list(self.df_bluetooth[self.df_bluetooth['user'] == user]['bt_mac'])
+        states = list(self.df_bluetooth[self.df_bluetooth['user'] == self.user]['bt_mac'])
         state_counter.update(states)
 
         p = np.array(state_counter.values()) * 1.0/len(states)
@@ -56,17 +56,32 @@ class Bluetooth_extractor:
         Ni = len(p); entropy = 0.0
         for j in range(Ni):
             entropy -= p[j]*np.log(p[j])
-        return entropy
+        
+        return {'%s[bluetooth]_social_entropy' % self.auxlabel: entropy}
 
+    
+    def __filtering_condition(self, datapoint, feature, thr):
+        if feature in datapoint:
+            if datapoint[feature] <= 0:
+                raise Exception('[bluetooth] %d %s is 0' % (self.user,feature))
     
     def main(self, user):
         if user not in self.users:
-            raise Exception('User %s not in dataset' % user)
+            raise Exception('[bluetooth] User %s not in dataset' % user)
             
-        datapoint = {'%sbluetooth_social_entropy' % self.auxlabel: self._compute_entropy(user)}
+        self.user = user
+            
+        datapoint = {}
         
-        # Add outlier conditions
-        if datapoint['%sbluetooth_social_entropy' % self.auxlabel] == 0:
-            raise Exception('[bluetooth] %d %sbluetooth_social_entropy is 0' % (user,self.auxlabel))
+        extractors = [self._compute_entropy()]
+        
+        # Exclusion condition
+        for i, ex in enumerate(extractors):
+            if i in self.suppress:
+                continue
+            datapoint.update(ex)
+        
+        # Add filtering conditions
+        self.__filtering_condition(datapoint,'%s[bluetooth]_social_entropy' % self.auxlabel,0)
             
         return datapoint
