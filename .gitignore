@@ -3,3 +3,4 @@ data_cache
 *-checkpoint.ipynb
 .ipynb_checkpoints
 .DS_STORE
+build_dataset_safe.ipynb
