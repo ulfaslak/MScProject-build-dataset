@@ -44,5 +44,5 @@ def run(X, maxSize=2):
 
 	return S
 
-X = np.genfromtxt('data/X.csv', delimiter=",")
+X = np.genfromtxt('../build_dataset/data/X.csv', delimiter=",")
 run(X, 3)
