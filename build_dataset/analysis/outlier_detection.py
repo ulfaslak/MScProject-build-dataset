@@ -58,7 +58,7 @@ class Outlier_detector:
             for j,_ in enumerate(y_pred):
                 self.pred_ys[j].append(y_pred[j])
 
-        if hard:
+        if self.hard:
             self.pred_avgs = dict((k,np.min(v)) for k,v in self.pred_ys.items())
         else:
             self.pred_avgs = dict((k,np.mean(v)) for k,v in self.pred_ys.items())
