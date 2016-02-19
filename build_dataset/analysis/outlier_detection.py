@@ -26,7 +26,7 @@ class Outlier_detector:
         List of outlier row indices
     """
     
-    def __init__(self, X, visualize=False, threshold=-0.5, nu=0.1, kernel="rbf", gamma=None):
+    def __init__(self, X, hard=False, visualize=False, threshold=-0.5, nu=0.1, kernel="rbf", gamma=None):
         if gamma == None:
             gamma = 1.0/X.shape[1]
         self.X = X
@@ -57,7 +57,11 @@ class Outlier_detector:
             for j,_ in enumerate(y_pred):
                 self.pred_ys[j].append(y_pred[j])
 
-        self.pred_avgs = dict((k,np.mean(v)) for k,v in self.pred_ys.items())
+        if hard:
+            self.pred_avgs = dict((k,np.min(v)) for k,v in self.pred_ys.items())
+        else:
+            self.pred_avgs = dict((k,np.mean(v)) for k,v in self.pred_ys.items())
+            
         outliers = [k for k,v in self.pred_avgs.items() if v < self.threshold]
     
         return outliers
