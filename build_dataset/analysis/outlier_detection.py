@@ -32,6 +32,7 @@ class Outlier_detector:
         self.X = X
         self.threshold = threshold
         self.visualize = visualize
+        self.hard = hard
         self.N, self.M = X.shape
         
         self.component_combinations = []
@@ -61,7 +62,7 @@ class Outlier_detector:
             self.pred_avgs = dict((k,np.min(v)) for k,v in self.pred_ys.items())
         else:
             self.pred_avgs = dict((k,np.mean(v)) for k,v in self.pred_ys.items())
-            
+
         outliers = [k for k,v in self.pred_avgs.items() if v < self.threshold]
     
         return outliers
