@@ -2,7 +2,7 @@ function S = ComputeSimilarityMat(X,maxSize)
 
 % Set algorithm parameters
 maxRuns = 1;
-numIter = 1;
+numIter = 50;
 Sdim = size(X,2);
 
 S = zeros(Sdim,Sdim)
@@ -13,6 +13,11 @@ for i = 2:maxSize
     S_sizes{i-1} = zeros(Sdim,Sdim);
 end
 
+% Create globally random shuffling of data
+for i = 1:maxSize
+    shuffInd(i,:)=randperm(size(X,1));
+end
+
 % Loop though each subset length-class
 for i = 1:length(subsets)
     subset_len_i = subsets{i};
@@ -20,7 +25,7 @@ for i = 1:length(subsets)
     for j = 1:size(subset_len_i,1)
         subset = subset_len_i(j,:);
         featpairs = nchoosek(subset,2);
-        Tratio = CalculateSimplexTratiosPCHA(X(:,subset),length(subset)+1,maxRuns,numIter);
+        Tratio = CalculateSimplexTratiosPCHA_mod(X(:,subset), shuffInd);
         for fp_k = 1:size(featpairs,1)
             fp = featpairs(fp_k,:);
             S_sizes{i}(fp(1),fp(2)) = S_sizes{i}(fp(1),fp(2)) + Tratio;

@@ -92,7 +92,7 @@ class Outlier_detector:
             Z = Z.reshape(xx.shape)
             
             # Define plot location and set title
-            subplot = plt.subplot(rows,cols, i)
+            subplot = plt.subplot(rows,cols, i+1)
             subplot.set_title(combo)
             
             # Plot contours
