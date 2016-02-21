@@ -146,7 +146,7 @@ class Outlier_detector_kd:
     X : np.array
         Data matrix of N, M dimensions.
     threshold : float
-        Cut off value. Increase to remove more points. 
+        Fraction of points to be considered outliers.
     visualize : bool
         Instruction whether to visualize detection scheme. Number of output
         figures increases polynomialy with number of columns in X!
@@ -175,9 +175,9 @@ class Outlier_detector_kd:
 
     def _compute_outliers(self):
 
-        self.clf.fit(X)
-        self.log_dens = self.clf.score_samples(X)
-        outliers = [k for k,v in self.log_dens if v < self.threshold]
+        self.clf.fit(self.X)
+        self.log_dens = self.clf.score_samples(self.X)
+        outliers = sorted(enumerate(self.log_dens), key=lambda x: x[1])[:int(self.threshold*self.N)]
     
         return outliers
 
@@ -197,11 +197,14 @@ class Outlier_detector_kd:
             self.clf.fit(X)
             
             # Get gridpoints for use in contour plots
-            xx, yy = np.meshgrid(np.linspace(X[:,0].min()-2, X[:,0].max()+2, 500), 
-                                 np.linspace(X[:,1].min()-2, X[:,1].max()+2, 500))
+            xx, yy = np.meshgrid(np.linspace(X[:,0].min()-2, X[:,0].max()+2, 20), 
+                                 np.linspace(X[:,1].min()-2, X[:,1].max()+2, 20))
+            
+            plot_data = np.vstack((xx.ravel(), yy.ravel())).T
+            log_dens_spectrum = self.clf.score_samples(plot_data)
 
             # Compute levels lines and points
-            Z = self.log_dens.reshape(X.shape)
+            Z = log_dens_spectrum.reshape(xx.shape)
             
             # Define plot location and set title
             subplot = plt.subplot(rows,cols, i+1)
