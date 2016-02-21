@@ -157,7 +157,7 @@ class Outlier_detector_kd:
         List of indices for outlier points
     """
 
-    def __init__(self, X, visualize=False, threshold=-0.5,  bandwidth=1.0, kernel='gaussian'):
+    def __init__(self, X, visualize=False, threshold=0.5,  bandwidth=1.0, kernel='gaussian'):
 
         self.X = X
         self.visualize = visualize
@@ -238,6 +238,13 @@ class Outlier_detector_kd:
         #plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
 
         plt.show()
+
+
+    def main(self):
+        outliers = self._compute_outliers()
+        if self.visualize:
+            self._show_kd_plots()
+        return outliers
 
 
 
