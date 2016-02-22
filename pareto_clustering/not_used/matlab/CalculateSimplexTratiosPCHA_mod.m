@@ -16,12 +16,14 @@ end
 %I = 1:N; U = 1:N;
 
 % PCHA for shuffled and non-shuffled
-%[Arch3Shuf,~,~,~,varexplShuf]=PCHA1(X_shuff',numArch,I,U,delta);
-%[Arch3Orig,~,~,~,varexplOrig]=PCHA1(Xs',numArch,I,U,delta);
+
+
 
 % Calculating the volumes of simplices
+%[Arch3Shuf,~,~,~,varexplShuf]=PCHA1(X_shuff',numArch,I,U,delta);
 %ArchShufRed = bsxfun(@minus,Arch3Shuf,Arch3Shuf(:,numArch));
 %VolArchShuf = abs(det(ArchShufRed(:,1:end-1))/factorial(M));
+%[Arch3Orig,~,~,~,varexplOrig]=PCHA1(Xs',numArch,I,U,delta);
 %ArchOrigRed = bsxfun(@minus,Arch3Orig,Arch3Orig(:,numArch));
 %VolArchOrig = abs(det(ArchOrigRed(:,1:end-1))/factorial(M));
 
