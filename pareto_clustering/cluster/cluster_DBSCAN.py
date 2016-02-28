@@ -37,7 +37,7 @@ def fit_clustering(D, params="auto"):
 		        vals.append(D[i,j])
 
 
-		eps_range = np.linspace(np.min(vals),np.max(vals),10)
+		eps_range = np.linspace(np.min(vals)+0.001,np.max(vals)+0.001,10)
 		msa_range = range(2,12)
 
 		# Construct grids of parameters vs number of clusters and outliers

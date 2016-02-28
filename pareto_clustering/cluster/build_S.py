@@ -188,7 +188,7 @@ class Build_S:
 
 				if visualize:
 					pair_triangles_orig[(i,j)] = tri_points_s_orig.T.reshape(-1,2)
-				print "\t%d(%d)" % (j,t),
+				print "%d(%d)" % (j,t),
 			print
 
 		return P, T, pair_triangles_orig, pair_inliers, pair_outliers
