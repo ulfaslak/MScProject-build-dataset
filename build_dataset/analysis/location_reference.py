@@ -52,7 +52,7 @@ class Load_location_reference:
         else:
             # Load
             print "[location_reference] Loading datasource from local."
-            with open(self.ROOTPATH + '/data_cache/%slocation_reference.json' % auxlabel) as infile:
+            with open(self.ROOTPATH + '/build_dataset/data_cache/%slocation_reference.json' % auxlabel) as infile:
                 self.location_reference = json.load(infile)
             self.users = set(self.location_reference.keys())
             
@@ -60,7 +60,7 @@ class Load_location_reference:
     def _save_data(self,data):
         # Save
         print "...succes!",
-        with open(self.ROOTPATH + '/data_cache/%slocation_reference.json' % self.auxlabel, 'w') as outfile:
+        with open(self.ROOTPATH + '/build_dataset/data_cache/%slocation_reference.json' % self.auxlabel, 'w') as outfile:
             json.dump(data, outfile)
         print "Saved."
 

@@ -34,12 +34,12 @@ class Bluetooth_extractor:
             
             # Save
             print "...succes! Saving."
-            self.df_bluetooth.to_pickle(ROOTPATH + '/data_cache/%sdf_bluetooth.pickle' % auxlabel)
+            self.df_bluetooth.to_pickle(ROOTPATH + '/build_dataset/data_cache/%sdf_bluetooth.pickle' % auxlabel)
             
         else:
             # Load
             print "[bluetooth] Loading datasource from local."
-            self.df_bluetooth = pd.read_pickle(ROOTPATH + '/data_cache/%sdf_bluetooth.pickle' % auxlabel)
+            self.df_bluetooth = pd.read_pickle(ROOTPATH + '/build_dataset/data_cache/%sdf_bluetooth.pickle' % auxlabel)
             self.users = set(self.df_bluetooth['user'])
         
         print "[bluetooth] Number of datapoints in range:", len(self.df_bluetooth)

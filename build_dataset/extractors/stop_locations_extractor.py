@@ -29,12 +29,12 @@ class Stop_locations_extractor:
             
             # Save
             print "...succes! Saving."
-            self.df_stop_locations.to_pickle(ROOTPATH + '/data_cache/%sdf_stop_locations.pickle' % auxlabel)
+            self.df_stop_locations.to_pickle(ROOTPATH + '/build_dataset/data_cache/%sdf_stop_locations.pickle' % auxlabel)
             
         else:
             # Load
             print "[stop_locations] Loading datasource from local."
-            self.df_stop_locations = pd.read_pickle(ROOTPATH + '/data_cache/%sdf_stop_locations.pickle' % auxlabel)
+            self.df_stop_locations = pd.read_pickle(ROOTPATH + '/build_dataset/data_cache/%sdf_stop_locations.pickle' % auxlabel)
             self.users = set(self.df_stop_locations['user'])
         
         print "[stop_locations] Number of datapoints in range:", len(self.df_stop_locations)
