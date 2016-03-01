@@ -11,7 +11,7 @@ class Consensus_archetypes:
         self.use_variance = use_variance
         self.use_median = use_median
 
-        self.df_main = pd.read_csv('data/archetypes.csv')
+        self.df_main = pd.read_csv('build_dataset/data/archetypes.csv')
 
         df1 = self.df_main.iloc[:,range(0,5)]
         df2 = self.df_main.iloc[:,range(5,10)]
