@@ -5,8 +5,8 @@ from datetime import datetime as dt
 import numpy as np
 import os
 
-from workers import load_sensible_data as lsd
-from workers import apply_time_constraints as atc
+from build_dataset.workers import load_sensible_data as lsd
+from build_dataset.workers import apply_time_constraints as atc
 
 class Stop_locations_extractor:
 

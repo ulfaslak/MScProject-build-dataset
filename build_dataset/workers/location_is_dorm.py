@@ -1,11 +1,10 @@
-"""Validate whether geographical coordinate point is at known dorm.
-Validate fences using https://www.mapcustomizer.com/.
-
-Algorithm from http://www.ariel.com.au/a/python-point-int-poly.html
-"""
-
 def validate(point):
     """Validate if point is in known dorm location.
+
+    Validate whether geographical coordinate point is at known dorm.
+    Validate fences using https://www.mapcustomizer.com/.
+
+    Algorithm from http://www.ariel.com.au/a/python-point-int-poly.html
     
     Parameters
     ----------

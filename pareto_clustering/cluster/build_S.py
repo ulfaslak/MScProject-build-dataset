@@ -1,7 +1,7 @@
-from pareto_clustering.point_location import min_triangle as mint
-from pareto_clustering.point_location.geo.shapes import Point, Polygon
-from pareto_clustering.point_location.geo.spatial import toNumpy
-from pareto_clustering.point_location.geo.drawer import plot
+from pareto_clustering.dependencies.point_location import min_triangle as mint
+from pareto_clustering.dependencies.point_location.geo.shapes import Point, Polygon
+from pareto_clustering.dependencies.point_location.geo.spatial import toNumpy, convexHull
+from pareto_clustering.dependencies.point_location.geo.drawer import plot
 import numpy as np
 import signal
 import matplotlib.pylab as plt
@@ -73,6 +73,7 @@ class Build_S:
 		self.num_iter = num_iter
 		self.sample_size = sample_size
 		self.remove_outliers = remove_outliers
+		self.Nsubset = int(self.N*sample_size)
 
 		if not remove_outliers:
 			pass
@@ -91,6 +92,8 @@ class Build_S:
 
 
 	def __clean_Xpair(self,Xpair):
+		"""Return pointset with outliers removed
+		"""
 		if self.remove_outliers:
 			out_svm = Outlier_detector_svm(Xpair, hard=False, threshold=-1, visualize=False, nu=0.1, gamma=0.25)
 			outliers = out_svm.main()
@@ -100,7 +103,9 @@ class Build_S:
 			return Xpair, [], range(Xpair.shape[0])
 
 
-	def __get_area(self, Xpair):
+	def __min_tri(self, Xpair):
+		"""Compute min. triangle for set of points
+		"""
 		while True:
 			points = [Point(*tuple(p)) for p in Xpair]
 			min_tri = mint.minTriangle(Polygon(points))
@@ -118,6 +123,13 @@ class Build_S:
 
 
 	def _build_S(self, visualize):
+
+		# Number of pairs to compute
+		num_pairs = self.M*(self.M-1)/2
+
+		# Triangle computation time allowed
+		patience = 0.00000747*(self.Nsubset*np.log(self.Nsubset))
+
 		P = np.zeros((self.M, self.M))
 		T = np.zeros((self.M, self.M))
 		C = np.zeros((self.M, self.M))
@@ -131,10 +143,14 @@ class Build_S:
 		pair_inliers = {}
 		pair_outliers = {}
 
+		p = 0; c = 0
 		for i in range(self.M):
-			print i, "vs...",
+			#print i, "vs...",
 			for j in range(self.M):
 				if j <= i: continue
+				if int(c*1.0/num_pairs*100) > p:
+					print "%d%% %d/%d" % (p, c,num_pairs); p+=10
+				c += 1
 
 				Xpair_cleaned, outliers, inliers = self.__clean_Xpair(self.X_orig[:,[i,j]])
 				pair_inliers[(i,j)] = inliers
@@ -147,8 +163,10 @@ class Build_S:
 
 				Npair, Mpair = Xpair_orig.shape
 
-				areas_s_orig = []
-				areas_s_shuf = []
+				areas_s_mintri_orig = []
+				areas_s_convex_orig = []
+				areas_s_mintri_shuf = []
+				areas_s_convex_shuf = []
 
 				tri_points_s_orig = np.empty((6,self.num_iter))
 				tri_points_s_shuf = np.empty((6,self.num_iter))
@@ -157,19 +175,20 @@ class Build_S:
 				t = 0
 				loop_over = range(self.num_iter)
 				for n in loop_over:
-					subset_indices = np.random.randint(0,Npair,size=int(Npair*self.sample_size))
+					subset_indices = np.random.randint(0,Npair,size=int(self.Nsubset))
 
 					Xpair_s_orig = Xpair_orig[subset_indices,:]
 					Xpair_s_shuf = Xpair_shuf[subset_indices,:]
 
-					signal.setitimer(signal.ITIMER_REAL,0.03)
+					signal.setitimer(signal.ITIMER_REAL,patience)
 					try:
-						points_s_orig, min_tri_s_orig, tri_s_area_orig = self.__get_area(Xpair_s_orig)
-						points_s_shuf, min_tri_s_shuf, tri_s_area_shuf = self.__get_area(Xpair_s_shuf)
-						signal.setitimer(signal.ITIMER_REAL,0)
+						# Minimal triangles
+						points_s_orig, min_tri_s_orig, tri_s_area_orig = self.__min_tri(Xpair_s_orig)
+						points_s_shuf, min_tri_s_shuf, tri_s_area_shuf = self.__min_tri(Xpair_s_shuf)
+						signal.alarm(0)
 					except ValueError: 
 						t+=1
-						signal.setitimer(signal.ITIMER_REAL,0)
+						signal.alarm(0)
 						loop_over.append(self.num_iter-1+t)
 						continue
 					except TimeoutException: 
@@ -177,21 +196,30 @@ class Build_S:
 						loop_over.append(self.num_iter-1+t)
 						continue
 
-					areas_s_orig.append(tri_s_area_orig)
-					areas_s_shuf.append(tri_s_area_shuf)
+					# Convex hull area
+					convexarea_orig = convexHull(points_s_orig).area()
+					convexarea_shuf = convexHull(points_s_shuf).area()
+
+					areas_s_mintri_orig.append(tri_s_area_orig)
+					areas_s_convex_orig.append(convexarea_orig)
+					areas_s_mintri_shuf.append(tri_s_area_shuf)
+					areas_s_convex_shuf.append(convexarea_shuf)
+
 					tri_points_s_orig[:,n-t] = toNumpy(min_tri_s_orig.points).reshape((6,1)).T
 					tri_points_s_shuf[:,n-t] = toNumpy(min_tri_s_shuf.points).reshape((6,1)).T
 
-				P[i,j] = np.mean(np.array(areas_s_orig) >= np.array(areas_s_shuf))
-				T[i,j] = np.mean(areas_s_shuf) / np.mean(areas_s_orig)
-				C[i,j] = len(areas_s_shuf)
+				P[i,j] = np.mean(np.array(areas_s_mintri_orig) >= np.array(areas_s_mintri_shuf))
+				T[i,j] = np.mean(areas_s_mintri_shuf) / np.mean(areas_s_mintri_orig)
+				C[i,j] = np.mean(areas_s_convex_orig) / np.mean(areas_s_convex_shuf)
 
 				if visualize:
 					pair_triangles_orig[(i,j)] = tri_points_s_orig.T.reshape(-1,2)
-				print "%d(%d)" % (j,t),
-			print
+				#print "%d(%d)" % (j,t),
+			#print
 
-		return P, T, pair_triangles_orig, pair_inliers, pair_outliers
+		print "100%% %d/%d" % (num_pairs,num_pairs)
+
+		return P, T, C, pair_triangles_orig, pair_inliers, pair_outliers
 
 
 	def _show_triangle_plots(self, pair_triangles_orig, pair_inliers, pair_outliers):
@@ -231,10 +259,10 @@ class Build_S:
 
 
 	def main(self, visualize=False):
-		P, T, pair_triangles_orig, pair_inliers, pair_outliers = self._build_S(visualize=visualize)
+		P, T, C, pair_triangles_orig, pair_inliers, pair_outliers = self._build_S(visualize=visualize)
 		if visualize:
 			self._show_triangle_plots(pair_triangles_orig, pair_inliers, pair_outliers)
-		return P, T
+		return P, T, C
 
 
 

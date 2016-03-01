@@ -1,14 +1,13 @@
-"""Validate whether geographical coordinate point is on DTU campus.
-Planar approximation test of whether a point is inside the polygon
-(geofence) that encloses DTU. Complex geofence does not include Skylab, or
-any of the kollegiums, because it is meant to encompas study-related
-geospacial areas.
-
-Algorithm from http://www.ariel.com.au/a/python-point-int-poly.html
-"""
-
 def validate(point, poly="complex"):
     """Validate if point is inside campus.
+
+    Validate whether geographical coordinate point is on DTU campus.
+    Planar approximation test of whether a point is inside the polygon
+    (geofence) that encloses DTU. Complex geofence does not include Skylab, or
+    any of the kollegiums, because it is meant to encompas study-related
+    geospacial areas.
+
+    Algorithm from http://www.ariel.com.au/a/python-point-int-poly.html
     
     Parameters
     ----------

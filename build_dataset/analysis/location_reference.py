@@ -3,10 +3,10 @@ from collections import defaultdict, Counter
 import os
 import json
 
-from workers import load_sensible_data as lsd
-from workers import apply_time_constraints as atc
-from workers import location_is_dorm as lid
-from workers import location_is_campus as lic
+from build_dataset.workers import load_sensible_data as lsd
+from build_dataset.workers import apply_time_constraints as atc
+from build_dataset.workers import location_is_dorm as lid
+from build_dataset.workers import location_is_campus as lic
 
 
 class Load_location_reference:
