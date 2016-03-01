@@ -33,12 +33,12 @@ class Screen_extractor:
             
             # Save
             print "...succes! Saving."
-            self.df_screen.to_pickle(ROOTPATH + '/data_cache/%sdf_screen.pickle' % auxlabel)
+            self.df_screen.to_pickle(ROOTPATH + '/build_dataset/data_cache/%sdf_screen.pickle' % auxlabel)
             
         else:
             # Load
             print "[screen] Loading datasource from local."
-            self.df_screen = pd.read_pickle(ROOTPATH + '/data_cache/%sdf_screen.pickle' % auxlabel)
+            self.df_screen = pd.read_pickle(ROOTPATH + '/build_dataset/data_cache/%sdf_screen.pickle' % auxlabel)
             self.users = set(self.df_screen['user'])
         
         print "[screen] Number of datapoints in range:", len(self.df_screen)
