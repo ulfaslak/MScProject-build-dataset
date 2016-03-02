@@ -241,7 +241,7 @@ class Sms_extractor:
             chats_initiated += len([c for c in chats if list(c['type'])[0] == 2])
             chats_concluded += len([c for c in chats if list(c['type'])[-1] == 2])
             chats_count += len(chats)
-            chat_spans.expand([(list(c['timestamp'])[0]/1000, list(c['timestamp'])[-1]/1000)) for c in chats])
+            chat_spans.expand([(list(c['timestamp'])[0]/1000, list(c['timestamp'])[-1]/1000) for c in chats])
 
         # compute feature 4
         responsetimes_list = [v['average_outgoing'] for _,v in converser_response_times.items()
