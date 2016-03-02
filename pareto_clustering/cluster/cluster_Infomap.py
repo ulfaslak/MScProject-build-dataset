@@ -3,7 +3,7 @@ import subprocess
 from collections import defaultdict
 import re
 
-def community_detection_Infomap(T):
+def fit(T):
     """Run Infomap community detection
     
     Parameters

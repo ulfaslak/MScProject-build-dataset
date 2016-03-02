@@ -25,11 +25,14 @@ class Sms_extractor:
 
         Example
         -------
-            {'sms_fractions_of_conversations_started': 0.34782608695652173,
-             'sms_traffic': 3.6888794541139363,
-             'sms_overall_received_responsiveness': -9.0581865605306326,
-             'sms_overall_responsiveness': -9.0610147611536238,
-             'sms_selectivity_in_responsiveness': -5.4102083517105317}
+            {'[sms]_initiated_percent': 0.34782608695652173,
+             '[sms]_concluded_percent': 0.45482608695652173,
+             '[sms]_outgoing_percent': 0.68732608695652173,
+             '[sms]_chat_overlap': 0.68732608695652173,
+             '[sms]_traffic': 3.6888794541139363,
+             '[sms]_responsiveness_received': -9.0581865605306326,
+             '[sms]_responsiveness': -9.0610147611536238,
+             '[sms]_responsiveness_std': -5.4102083517105317}
     """
     
     def __init__(self, time_constraint, suppress=[], auxlabel="", load_old_datasources=False):
@@ -70,12 +73,12 @@ class Sms_extractor:
     # Supporting functions #
     # -------------------- #
     
-    def __partition_dyad_messages_to_conversations(self, messages):
-        conversations = []
+    def __partition_dyad_messages_to_chats(self, messages):
+        chats = []
 
         timestamps = sorted(messages['timestamp']/1000)
 
-        conversation_breaks = []
+        chat_breaks = []
         for i, _ in enumerate(timestamps):
             if i == 0:
                 continue
@@ -84,40 +87,40 @@ class Sms_extractor:
             if delta_t > self.expiration_time * 3600:
                 start_break = int(timestamps[i-1])
                 end_break = int(timestamps[i])
-                conversation_breaks.append([start_break, end_break])
+                chat_breaks.append([start_break, end_break])
 
-        conversations = []
+        chats = []
 
-        if len(conversation_breaks) == 0:
-            conversations.append(messages)
-            return conversations
+        if len(chat_breaks) == 0:
+            chats.append(messages)
+            return chats
 
-        for i, _ in enumerate(conversation_breaks):
+        for i, _ in enumerate(chat_breaks):
             if i == 0:
-                conv_end = conversation_breaks[i][0]
-                conversation = messages[
+                conv_end = chat_breaks[i][0]
+                chat = messages[
                     messages['timestamp']/1000 <= conv_end]
-                conversations.append(conversation)
+                chats.append(chat)
                 continue
-            if i == len(conversation_breaks)-1:
-                conv_start = conversation_breaks[i][1]
-                conversation = messages[
+            if i == len(chat_breaks)-1:
+                conv_start = chat_breaks[i][1]
+                chat = messages[
                     messages['timestamp']/1000 >= conv_start]
-                conversations.append(conversation)
+                chats.append(chat)
                 continue
 
-            conv_start = conversation_breaks[i-1][1]
-            conv_end = conversation_breaks[i][0]
-            conversation = messages[
+            conv_start = chat_breaks[i-1][1]
+            conv_end = chat_breaks[i][0]
+            chat = messages[
                 messages['timestamp']/1000 >= conv_start][
                 messages['timestamp']/1000 <= conv_end]
 
-            conversations.append(conversation)
+            chats.append(chat)
 
-        return conversations
+        return chats
     
     
-    def __compute_user_conversations(self, expiration_time=6):
+    def __compute_user_chats(self, expiration_time=6):
         
         self.expiration_time = expiration_time
     
@@ -126,27 +129,27 @@ class Sms_extractor:
         # the people that the user texts with
         conversers = set(user_messages['address'])
 
-        user_conversations = {}
+        user_chats = {}
 
         for c in conversers:
             c_messages = user_messages[user_messages['address'] == c]
 
-            c_conversations = self.__partition_dyad_messages_to_conversations(c_messages)
+            c_chats = self.__partition_dyad_messages_to_chats(c_messages)
 
-            user_conversations[c] = c_conversations
+            user_chats[c] = c_chats
 
-        return user_conversations
+        return user_chats
     
     
-    def __compute_conversation_response_times(self, conversation):
-        conversation = conversation.sort(['timestamp'],ascending=[1])
+    def __compute_chat_response_times(self, chat):
+        chat = chat.sort(['timestamp'],ascending=[1])
         
         response_times = defaultdict(list)
 
         sender_prev = {}
         sender = {}
 
-        for i, message in enumerate(conversation.iterrows()):
+        for i, message in enumerate(chat.iterrows()):
 
             if i == 0:
                 initiator = message[1]['type']
@@ -175,91 +178,111 @@ class Sms_extractor:
             response_time_user = self.expiration_time * 3600
         if np.isnan(response_time_converser) and initiator == 2:
             response_time_converser = self.expiration_time * 3600
-            
-            
-        #print self.expiration_time
+
 
         return response_time_user, response_time_converser
     
+
     
     def __compute_responsiveness_from_responsetimes(self,responsetimes):
         if len(responsetimes)==0: return 0
         return 1.0/np.mean(responsetimes)
     
-    def __compute_selectivity_in_responsiveness(self,responsetimes):
+    def __compute_responsiveness_std(self,responsetimes):
         if 0 in responsetimes: responsetimes.remove(0)
         if len(responsetimes)==0: return 0
         return np.std(1.0/np.array(responsetimes))+0.0001
+
+
+    def __compute_overlap(self, chat_spans):
+        # Bin
+        chat_spans = sorted(chat_spans, key=lambda x: (x[0], x[1]))
+        
+        # Fill in empty buckets with 0s
+        for i in range(24):
+            if i not in hist:
+                hist[i] = 0
+                
+        return hist
         
     
     
-    # ------------------- #
-    # Computate functions #
-    # ------------------- #
+    # ---------- #
+    # Extraction #
+    # ---------- #
     
     def _compute_sms_traffic(self):
         messages = self.df_sms[self.df_sms['user']==self.user]
         return {'%s[sms]_traffic' % self.auxlabel: len(messages)}
+
+    def _compute_outgoing_percent(self):
+        messages = self.df_sms[self.df_sms['user']==self.user]
+        outgoing_percent = len(messages[messages['type']==2]) * 1.0/len(messages)
+        return {'%s[sms]_outgoing_percent' % self.auxlabel: outgoing_percent}
     
-    def _compute_features_4_to_7(self):
-        user_conversations = self.__compute_user_conversations()
+    def _compute_features_from_chats(self):
 
         converser_response_times = {}
-        conversations_started = 0
-        conversations_count = 0
+        chats_initiated = 0
+        chats_concluded = 0
+        chats_count = 0
+        chat_spans = []
 
         i = 0
-        for converser, conversations in user_conversations.items():
-
+        for converser, chats in self.user_chats.items():
             # compute response times
-            response_times = [self.__compute_conversation_response_times(c) for c in conversations] #[(907.0, 36.0), (nan, nan), (239.0, 205.0), (140.0, 50.0)]
+            response_times = [self.__compute_chat_response_times(c) for c in chats] #[(907.0, 36.0), (nan, nan), (239.0, 205.0), (140.0, 50.0)]
 
             average_outgoing = np.mean([r[0] for r in response_times])
             average_incoming = np.mean([r[1] for r in response_times])
 
             converser_response_times[converser] = {'average_outgoing': average_outgoing, 'average_incoming': average_incoming}
 
-            conversations_started += len([c for c in conversations if list(c['type'])[0] == 2])
-            conversations_count += len(conversations)
-
-            #i += 1
-            #if i > 5:
-            #    return converser_response_times
+            chats_initiated += len([c for c in chats if list(c['type'])[0] == 2])
+            chats_concluded += len([c for c in chats if list(c['type'])[-1] == 2])
+            chats_count += len(chats)
+            chat_spans.expand([(list(c['timestamp'])[0]/1000, list(c['timestamp'])[-1]/1000)) for c in chats])
 
         # compute feature 4
         responsetimes_list = [v['average_outgoing'] for _,v in converser_response_times.items()
                                if not np.isnan(v['average_outgoing'])]
         
-        overall_responsiveness = self.__compute_responsiveness_from_responsetimes(
+        responsiveness = self.__compute_responsiveness_from_responsetimes(
             responsetimes_list)
 
         # compute feature 5
         received_responsetimes_list = [v['average_incoming'] for _,v in converser_response_times.items() 
                                         if not np.isnan(v['average_incoming'])]
-        
-        overall_received_responsiveness = self.__compute_responsiveness_from_responsetimes(
+        responsiveness_received = self.__compute_responsiveness_from_responsetimes(
             received_responsetimes_list)
         
         # compute feature 6
-        selectivity_in_responsiveness = self.__compute_selectivity_in_responsiveness(
+       _responsiveness_std = self.__compute_responsiveness_std(
             responsetimes_list)
 
-        # compute feature 7
-        fractions_of_conversations_started = conversations_started * 1.0/conversations_count
+        # compute feature 7, 8
+        initiated_percent = chats_initiated * 1.0/chats_count
+        concluded_percent = chats_concluded * 1.0/chats_count
 
-        return {'%s[sms]_overall_responsiveness' % self.auxlabel: overall_responsiveness, 
-                '%s[sms]_overall_received_responsiveness' % self.auxlabel: overall_received_responsiveness, 
-                '%s[sms]_selectivity_in_responsiveness' % self.auxlabel: selectivity_in_responsiveness, 
-                '%s[sms]_fractions_of_conversations_started' % self.auxlabel: fractions_of_conversations_started}
+        # compute feature 9
+
+
+        return {'%s[sms]_responsiveness' % self.auxlabel: responsiveness, 
+                '%s[sms]_responsiveness_received' % self.auxlabel: responsiveness_received, 
+                '%s[sms]_responsiveness_std' % self.auxlabel:_responsiveness_std, 
+                '%s[sms]_concluded_percent' % self.auxlabel: initiated_percent,
+                '%s[sms]_initiated_percent' % self.auxlabel: initiated_percent}
     
     
     def __transform_datapoint(self,datapoint):
         instructions = {
-            '%s[sms]_fractions_of_conversations_started' % self.auxlabel: (lambda x: x), 
+            '%s[sms]_initiated_percent' % self.auxlabel: (lambda x: x), 
+            '%s[sms]_concluded_percent' % self.auxlabel: (lambda x: x), 
             '%s[sms]_traffic' % self.auxlabel: (lambda x: np.log(x)), 
-            '%s[sms]_overall_received_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
-            '%s[sms]_overall_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
-            '%s[sms]_selectivity_in_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001))
+            '%s[sms]_outgoing_percent' % self.auxlabel: (lambda x: x), 
+            '%s[sms]_responsiveness_received' % self.auxlabel: (lambda x: np.log(x+0.00001)),
+            '%s[sms]_responsiveness' % self.auxlabel: (lambda x: np.log(x+0.00001)),
+            '%s[sms]_responsiveness_std' % self.auxlabel: (lambda x: np.log(x+0.00001))
         }
         
         datapoint = dict((k, instructions[k](v)) for k,v in datapoint.items())
@@ -267,7 +290,7 @@ class Sms_extractor:
         return datapoint
                         
         
-    def __filtering_condition(self, datapoint, feature, thr):
+    def __filtering_condition(self, datapoint, feature):
         if feature in datapoint:
             if datapoint[feature] <= 0:
                 raise Exception('[sms] %d %s is 0' % (self.user,feature))
@@ -278,11 +301,13 @@ class Sms_extractor:
             raise Exception('[sms] User %s not in dataset' % user)
         
         self.user = user
+        self.user_chats = self.__compute_user_chats()
         
         datapoint = {}
         
-        extractors = [self._compute_sms_traffic(), 
-                      self._compute_features_4_to_7()]
+        extractors = [self._compute_outgoing_percent(),
+                      self._compute_sms_traffic(),
+                      self._compute_chat_features()]
         
         # Exclusion condition
         for i, ex in enumerate(extractors):
@@ -291,9 +316,9 @@ class Sms_extractor:
             datapoint.update(ex)
 
         # Add filtering conditions
-        self.__filtering_condition(datapoint, '%s[sms]_overall_received_responsiveness' % self.auxlabel, 0)
-        self.__filtering_condition(datapoint, '%s[sms]_overall_responsiveness' % self.auxlabel, 0)
-        self.__filtering_condition(datapoint, '%s[sms]_selectivity_in_responsiveness' % self.auxlabel, 0)   
+        self.__filtering_condition(datapoint, '%s[sms]_responsiveness_received' % self.auxlabel)
+        self.__filtering_condition(datapoint, '%s[sms]_responsiveness' % self.auxlabel)
+        self.__filtering_condition(datapoint, '%s[sms]_responsiveness_std' % self.auxlabel)   
             
         if transformed:
             datapoint = self.__transform_datapoint(datapoint)        

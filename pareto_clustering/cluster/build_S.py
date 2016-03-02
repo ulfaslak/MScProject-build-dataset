@@ -2,11 +2,13 @@ from pareto_clustering.dependencies.point_location import min_triangle as mint
 from pareto_clustering.dependencies.point_location.geo.shapes import Point, Polygon
 from pareto_clustering.dependencies.point_location.geo.spatial import toNumpy, convexHull
 from pareto_clustering.dependencies.point_location.geo.drawer import plot
+from build_dataset.analysis.outlier_detection import Outlier_detector_svm
+
 import numpy as np
+from datetime import datetime as dt
 import signal
 import matplotlib.pylab as plt
 from matplotlib.patches import Ellipse
-from build_dataset.analysis.outlier_detection import Outlier_detector_svm
 
 
 class TimeoutException(Exception):   # Custom exception class
@@ -128,7 +130,7 @@ class Build_S:
 		num_pairs = self.M*(self.M-1)/2
 
 		# Triangle computation time allowed
-		patience = 0.00000747*(self.Nsubset*np.log(self.Nsubset))
+		patience = 0.2
 
 		P = np.zeros((self.M, self.M))
 		T = np.zeros((self.M, self.M))
@@ -180,12 +182,16 @@ class Build_S:
 					Xpair_s_orig = Xpair_orig[subset_indices,:]
 					Xpair_s_shuf = Xpair_shuf[subset_indices,:]
 
+					time_start = dt.now()
 					signal.setitimer(signal.ITIMER_REAL,patience)
 					try:
 						# Minimal triangles
+						failed = "orig"
 						points_s_orig, min_tri_s_orig, tri_s_area_orig = self.__min_tri(Xpair_s_orig)
+						failed = "shuf"
 						points_s_shuf, min_tri_s_shuf, tri_s_area_shuf = self.__min_tri(Xpair_s_shuf)
 						signal.alarm(0)
+						patience = 1.5*(dt.now()-time_start).total_seconds()
 					except ValueError: 
 						t+=1
 						signal.alarm(0)
@@ -195,6 +201,16 @@ class Build_S:
 						t+=1
 						loop_over.append(self.num_iter-1+t)
 						continue
+					except AttributeError:
+						print "Failed for: %s" % failed
+						plt.figure(figsize=(6,6))
+						plt.title("Distribution of points for which mintri calc fails")
+						if failed == "orig":
+							plt.scatter(Xpair_s_orig[:,0], Xpair_s_orig[:,1])
+							plt.show()
+						else:
+							plt.scatter(Xpair_s_shuf[:,0], Xpair_s_shuf[:,1])
+							plt.show()
 
 					# Convex hull area
 					convexarea_orig = convexHull(points_s_orig).area()

@@ -1,7 +1,7 @@
 from sklearn.cluster import DBSCAN
 import numpy as np
 
-def fit_clustering(D, mat="P", params="auto", visualize=False):
+def fit(D, mat="T", params="auto", visualize=False):
 	"""Cluster traits given distance matrix D
 
 	For practical purposes use inter-trait P-values as distance measures
