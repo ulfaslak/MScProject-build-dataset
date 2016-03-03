@@ -257,7 +257,8 @@ class Sms_extractor:
 			received_responsetimes_list)
 		
 		# compute feature 6
-	   _responsiveness_std = self.__compute_responsiveness_std(responsetimes_list)
+	   	_responsiveness_std = self.__compute_responsiveness_std(
+	   		responsetimes_list)
 
 		# compute feature 7, 8
 		initiated_percent = chats_initiated * 1.0/chats_count
