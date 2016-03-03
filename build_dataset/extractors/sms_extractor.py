@@ -307,7 +307,7 @@ class Sms_extractor:
 		
 		extractors = [self._compute_outgoing_percent(),
 					  self._compute_sms_traffic(),
-					  self._compute_chat_features()]
+					  self._compute_features_from_chats()]
 		
 		# Exclusion condition
 		for i, ex in enumerate(extractors):
