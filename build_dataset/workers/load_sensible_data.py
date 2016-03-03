@@ -46,8 +46,7 @@ def load(spans, dataset):
         print "<" + str(y) + ">",
         for m in months:
             print m[:3],
-            print dataset, "%s_%d" % (m, y)
-            columns, data = loader.load_data("sms", "january_2014")
+            columns, data = loader.load_data(dataset, "%s_%d" % (m, y))
             dict_tmp = {}
             for column, array in zip(columns, data):
                 dict_tmp[column] = array
