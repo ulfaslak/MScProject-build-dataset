@@ -4,8 +4,8 @@ import os
 import json
 
 from build_dataset.workers import load_sensible_data as lsd
-from build_dataset.workers import apply_time_constraints as atc
 from build_dataset.workers import location_is_dorm as lid
+from build_dataset.workers import location_is_friday_bar as lifb
 from build_dataset.workers import location_is_campus as lic
 
 
@@ -38,8 +38,7 @@ class Load_location_reference:
         if not load_reference:
             print "[location_reference] Building datasource from scratch ...",
         
-            df_stop_locations = lsd.load(time_constraint['spans'], "stop_locations")
-            df_stop_locations = atc.apply(df_stop_locations, time_constraint)
+            df_stop_locations = lsd.load(time_constraint, "stop_locations")
 
             # Sort dataframe
             self.df_stop_locations = df_stop_locations.sort(["timestamp"], ascending=True)
@@ -71,7 +70,7 @@ class Load_location_reference:
         return np.floor((longitude+7.5)/15)
 
 
-    def __compute_states(self, df_u):
+    def __aggregate_states(self, df_u):
         """Compute arrival, duration and coords of events for each location
 
         Returns
@@ -195,9 +194,9 @@ class Load_location_reference:
             u_tt = sorted(list(df_u['departure']))[-1]
 
             # aggregate state events
-            states = self.__compute_states(df_u)
+            states = self.__aggregate_states(df_u)
 
-            # compute summary statistics for sttes
+            # compute summary statistics for states
             u_states = dict()
             for state, obs_list in states.items():
                 #if len(obs_list) == 1: continue
@@ -224,6 +223,7 @@ class Load_location_reference:
                                'span': (span_s)/86400,
                                'timespent': time_spent/(span_s),
                                '__dorm': lid.validate(loca_center),
+                               '__friday_bar': lifb.validate(loca_center)
                                'loca_center': tuple(loca_center)}
 
                 state_point['type'] = self.__type_classifier(state_point)
@@ -240,3 +240,4 @@ class Load_location_reference:
 
     def main(self):
         return self.location_reference
+
