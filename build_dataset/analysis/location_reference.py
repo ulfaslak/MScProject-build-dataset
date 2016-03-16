@@ -16,11 +16,10 @@ class Load_location_reference:
     
     Parameters
     ----------
-    time_constraint : dict
+    tc : dict
         Specification on which type of period locations should be loaded for.
-    auxlabel : str
-        The label matching time_constraint
-    load_reference : bool
+        
+    load_cached : bool
         Specification of whether to build reference from scratch or load existing version
         
     Output
@@ -30,38 +29,32 @@ class Load_location_reference:
         as well as type of location (home, campus, fridaybar, 
     """
     
-    def __init__(self, time_constraint, auxlabel="", load_reference=True):
-        self.auxlabel = auxlabel
+    def __init__(self, tc, load_cached=True):
+        self.fileversion = hash(str(tc))%10000000
         
-        self.ROOTPATH = os.path.abspath('')
+        self.ROOTPATH = os.path.abspath('').split('build_dataset')[0]
         
-        if not load_reference:
-            print "[location_reference] Building datasource from scratch ...",
-        
-            df_stop_locations = lsd.load(time_constraint, "stop_locations")
+        if load_cached:
+            try:
+                self.location_reference = self._load()
+                self.users = set(self.location_reference.keys())
+            except IOError:
+                load_cached = False
 
-            # Sort dataframe
-            self.df_stop_locations = df_stop_locations.sort(["timestamp"], ascending=True)
+        if not load_cached:
+            self.df_stop_locations = lsd.load(tc, "stop_locations")
             self.users = set(self.df_stop_locations['user'])
-            
-            # Build location reference data structure and save
             self.location_reference = self._build_location_reference()
-            self._save_data(self.location_reference)
-            
-        else:
-            # Load
-            print "[location_reference] Loading datasource from local."
-            with open(self.ROOTPATH + '/build_dataset/data_cache/%slocation_reference.json' % auxlabel) as infile:
-                self.location_reference = json.load(infile)
-            self.users = set(self.location_reference.keys())
+            self._save(self.location_reference)
             
             
-    def _save_data(self,data):
-        # Save
-        print "...succes!",
-        with open(self.ROOTPATH + '/build_dataset/data_cache/%slocation_reference.json' % self.auxlabel, 'w') as outfile:
+    def _save(self,data):
+        with open(self.ROOTPATH+'build_dataset/data_cache/%dlocation_reference.json' % self.fileversion, 'w') as outfile:
             json.dump(data, outfile)
-        print "Saved."
+            
+    def _load(self):
+        with open(self.ROOTPATH+'build_dataset/data_cache/%dlocation_reference.json' % self.fileversion) as infile:
+            return json.load(infile)
 
         
     def __timezone_offset(self, longitude):
@@ -184,7 +177,7 @@ class Load_location_reference:
     def _build_location_reference(self):
         ds = dict()
         
-        print "\n[location_reference] Building reference from scratch ...",
+        print "Building location_reference:",
         for u in self.users:
             # get user stops and summed stops duration
             df_u = self.df_stop_locations[self.df_stop_locations['user'] == u]
@@ -223,7 +216,7 @@ class Load_location_reference:
                                'span': (span_s)/86400,
                                'timespent': time_spent/(span_s),
                                '__dorm': lid.validate(loca_center),
-                               '__friday_bar': lifb.validate(loca_center)
+                               '__friday_bar': lifb.validate(loca_center),
                                'loca_center': tuple(loca_center)}
 
                 state_point['type'] = self.__type_classifier(state_point)

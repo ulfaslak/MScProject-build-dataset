@@ -2,8 +2,24 @@ from sensible_raw.loaders import loader
 from datetime import datetime as dt
 import pandas as pd
 import numpy as np
+import os
 
-def load(tc, dataset):
+def load(tc, dataset, load_cached=True, filtering=False):
+    
+    ROOTPATH = os.path.abspath('').split('build_dataset')[0]
+    
+    def _filter_bt_special(df):
+        is_phone = lambda x: (x & 0x001F00) == 0x000200
+        return df[(is_phone(df['class'])==True) & (df['rssi'] > -75)]
+    
+    def _load():
+        fileversion = hash(str(tc))%10000000
+        return pd.read_pickle(ROOTPATH+'build_dataset/data_cache/%d%s.pickle' % (fileversion,dataset))
+        
+    def _save():
+        fileversion = hash(str(tc))%10000000
+        df.to_pickle(ROOTPATH+'build_dataset/data_cache/%d%s.pickle' % (fileversion,dataset))
+    
     def pull(spans, dataset):
         """Pull touched datasets given time constraint.
         
@@ -56,7 +72,6 @@ def load(tc, dataset):
                     
         return df
     
-    
     def apply_tc(df, tc):
         """Apply strict time constraints to data"""
         df_tmp = pd.DataFrame()
@@ -70,7 +85,7 @@ def load(tc, dataset):
 
         # Apply hours and days constraints
         hod = lambda x: np.floor(x%86400/3600)
-        dow = lambda x: np.floor((x%(86400*7)/86400+3)%7) #add 3 days cause 0th second is thursday (index 3)
+        dow = lambda x: np.floor((x%(86400*7)/86400+3)%7) #add 3 days bc 0th second is thursday (index 3)
 
         df = df[(hod(df['timestamp']/1000).isin(tc['hours'])) & 
                 (dow(df['timestamp']/1000).isin(tc['days']))]
@@ -78,7 +93,19 @@ def load(tc, dataset):
         return df
     
     
-    return apply_tc(
-        pull(tc['spans'], dataset),
-        tc
-    )
+    if load_cached:
+        try: 
+            return _load()
+        except IOError:
+            pass
+
+    df = apply_tc(pull(tc['spans'], dataset),
+                  tc
+                 ).sort(['timestamp'], ascending=1)
+    
+    if filtering == "bt_special":
+        df = _filter_bt_special(df)
+        
+    _save()
+    
+    return df
