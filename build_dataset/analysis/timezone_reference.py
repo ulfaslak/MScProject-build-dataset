@@ -4,8 +4,6 @@ from datetime import datetime as dt
 import os
 import json
 
-from build_dataset.workers import load_sensible_data as lsd
-
 
 class Load_timezone_reference:
     """Load (or build) timezone_reference
@@ -39,7 +37,8 @@ class Load_timezone_reference:
                 load_cached = False
 
         if not load_cached:
-            self.df_location = lsd.load(tc, "location")
+            from build_dataset.workers import load_sensible_data as lsd
+            self.df_location = lsd.load(tc, "location", offset=False)
             self.users = set(self.df_location['user'])
             self.timezone_reference = self._build_timezone_reference()
             self._save(self.timezone_reference)
@@ -78,9 +77,13 @@ class Load_timezone_reference:
         return ds
     
     def timezone_offset(self, user, timestamp):
-        reference_u = self.timezone_reference[str(user)]
-        offset_bin = np.digitize(timestamp, reference_u['bins'], right=True) - 1
-        return reference_u['bin_offsets'][offset_bin]
+        try:
+            reference_u = self.timezone_reference[str(user)]
+            offset_bin = np.digitize(timestamp, reference_u['bins'], right=True) - 1
+            return reference_u['bin_offsets'][offset_bin]
+        except KeyError:
+            return 0
+        
             
             
             

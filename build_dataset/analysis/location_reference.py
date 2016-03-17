@@ -221,7 +221,7 @@ class Load_location_reference:
 
                 state_point['type'] = self.__type_classifier(state_point)
 
-                u_states[state] = state_point
+                u_states[str(int(state))] = state_point
 
             ds[str(u)] = u_states
             

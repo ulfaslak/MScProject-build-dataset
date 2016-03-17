@@ -4,8 +4,26 @@ import pandas as pd
 import numpy as np
 import os
 
-def load(tc, dataset, load_cached=True, filtering=False):
+
+def load(tc, dataset, load_cached=True, filtering=False, offset=True):
+    """Load dataset in a given time frame.
     
+    This function takes a time frame and a datatype, pulls all affected months
+    from the API, transforms the timestamps to respect the user location, and
+    finally trims the dataset to meet the requirements specified in argument 'tc'.
+        
+    Parameters
+    ----------
+    spans : list-of-tuples
+        A list of timespans that needs to be loaded data for.
+        
+    dataset : str
+        The name of the datatype to load.
+
+    Returns
+    -------
+    df : Pandas Dataframe
+    """
     ROOTPATH = os.path.abspath('').split('build_dataset')[0]
     
     def _filter_bt_special(df):
@@ -21,19 +39,7 @@ def load(tc, dataset, load_cached=True, filtering=False):
         df.to_pickle(ROOTPATH+'build_dataset/data_cache/%d%s.pickle' % (fileversion,dataset))
     
     def pull(spans, dataset):
-        """Pull touched datasets given time constraint.
-        
-        Parameters
-        ----------
-        spans : list-of-tuples
-            A list of timespans that needs to be loaded data for
-        dataset : str
-            The name of the dataset that should be loaded
-            
-        Returns
-        -------
-        df : Pandas Dataframe
-        """
+        """Pull touched datasets given time constraint."""
         
         months_int = set(
             [item for sublist in 
@@ -71,15 +77,34 @@ def load(tc, dataset, load_cached=True, filtering=False):
                 df = pd.concat([df, pd.DataFrame(dict_tmp)], ignore_index=True)
                     
         return df
+
+    def correct_offset(df, time_constraint):
+        """Correct timestamps with respects to location."""
+        from build_dataset.analysis import timezone_reference as tzref
+        timezone_offset = tzref.Load_timezone_reference(time_constraint).timezone_offset
+
+        df['timestamp'] = df['timestamp']/1000 + np.array(
+            [timezone_offset(u, ts)+1 for (u,ts) in zip(df['user'], df['timestamp']/1000)]
+            )*3600
+        
+        if dataset == "stop_locations":
+            df['arrival'] += np.array(
+                [timezone_offset(u, ts)+1 for (u,ts) in zip(df['user'], df['arrival'])]
+            )*3600
+            df['departure'] += np.array(
+                [timezone_offset(u, ts)+1 for (u,ts) in zip(df['user'], df['departure'])]
+            )*3600
+
+        return df
     
     def apply_tc(df, tc):
-        """Apply strict time constraints to data"""
+        """Apply strict time constraints to data."""
         df_tmp = pd.DataFrame()
         for s in tc['spans']:
             df_tmp = pd.concat([
                     df_tmp,
-                    df[(df['timestamp']/1000 >= int(dt.strptime(s[0], "%d/%m/%y").strftime("%s"))) & 
-                           (df['timestamp']/1000 <= int(dt.strptime(s[1], "%d/%m/%y").strftime("%s")))]
+                    df[(df['timestamp'] >= int(dt.strptime(s[0], "%d/%m/%y").strftime("%s"))) & 
+                           (df['timestamp'] <= int(dt.strptime(s[1], "%d/%m/%y").strftime("%s")))]
                 ])
         df = df_tmp
 
@@ -98,10 +123,10 @@ def load(tc, dataset, load_cached=True, filtering=False):
             return _load()
         except IOError:
             pass
-
-    df = apply_tc(pull(tc['spans'], dataset),
-                  tc
-                 ).sort(['timestamp'], ascending=1)
+    
+    df = pull(tc['spans'], dataset)                        # Pull raw data
+    if offset: df = correct_offset(df, tc)                 # Location offset
+    df = apply_tc(df, tc).sort(['timestamp'], ascending=1) # Strict time constraint
     
     if filtering == "bt_special":
         df = _filter_bt_special(df)
