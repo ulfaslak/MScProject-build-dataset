@@ -34,21 +34,23 @@ tc2 = {'hours': range(24),
 	]
 }
 
-for i, tc in enumerate([tc0, tc1, tc2]):
+def run():
+    
+    for i, tc in enumerate([tc0, tc1, tc2]):
 
-    print "## ----------------- ##"
-    print "## Building for tc%d ##" % i
-    print "## ----------------- ##"
+        print "## ----------------- ##"
+        print "## Building for tc%d ##" % i
+        print "## ----------------- ##"
 
-    print "Location Reference..."
-    locref.Load_location_reference(tc, load_cached=False)
-    print "success!\n"
-    print "Timezone Reference..."
-    tzref.Load_timezone_reference(time_constraint, load_cached=False)
-    print "success!\n"
+        print "Location Reference..."
+        locref.Load_location_reference(tc, load_cached=False)
+        print "\nsuccess!\n"
+        print "Timezone Reference..."
+        tzref.Load_timezone_reference(time_constraint, load_cached=False)
+        print "\nsuccess!\n"
 
-    print "Iterating over datasets:"
-	for dataset in ["calllog", "sms", "screen", "stop_locations", "bluetooth"]:
-        print "\tBuilding '%s'..." % dataset
-        lsd.load(tc, dataset, load_cached=False)
-        print "\tsuccess!\n"
+        print "\nIterating over datasets:"
+        for dataset in ["calllog", "sms", "screen", "stop_locations", "bluetooth"]:
+            print "\tBuilding '%s'..." % dataset
+            lsd.load(tc, dataset, load_cached=False)
+            print "\n\tsuccess!\n"

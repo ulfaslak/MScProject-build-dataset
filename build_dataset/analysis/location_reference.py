@@ -33,7 +33,8 @@ class Load_location_reference:
         self.fileversion = hash(str(tc))%10000000
         
         self.ROOTPATH = os.path.abspath('').split('build_dataset')[0]
-        
+        if self.ROOTPATH[-1] != "/": self.ROOTPATH += "/"
+            
         if load_cached:
             try:
                 self.location_reference = self._load()
@@ -107,7 +108,7 @@ class Load_location_reference:
     def __bin_24(self, start, duration):
         """Bin seconds in a time-span into to 24 hour buckets.
         """
-        # Bin
+        
         bins = [(1+h)*3600 for h in range(24)]
         vals = [x%86400 for x in xrange(int(start),int(start+duration),1)]
         hist = Counter(np.digitize(vals,bins))
@@ -150,18 +151,27 @@ class Load_location_reference:
             return 24+home_mean - cmean_hour
 
 
-    def __spread(self, timestamps, timerange):
+    def __days_active(self, timestamps, timerange):
         """Measures what fraction of days in its span, this location was visited"""
+        
+        if timerange == 0:
+            return 0
+        
         bins = range(timerange/86400+1)
         vals = (np.array(timestamps)-timestamps[0])/86400
-        hist = Counter(np.digitize(vals,bins))
+        try:
+            hist = Counter(np.digitize(vals,bins))
+        except:
+            print "timerange", timerange
+            print "bins", bins
+            print "vals", vals
 
         return len(hist) * 1.0 / len(bins)
 
     def __type_classifier(self, state_point):
         # Classifiy home location
         if state_point['hmdiff'] < 4:
-            if state_point['spread'] > 0.2:
+            if state_point['days_active'] > 0.2:
                 if state_point['timespent'] > 0.15:
                     if state_point['span'] > 20:
                         return "home"
@@ -177,7 +187,6 @@ class Load_location_reference:
     def _build_location_reference(self):
         ds = dict()
         
-        print "Building location_reference:",
         for u in self.users:
             # get user stops and summed stops duration
             df_u = self.df_stop_locations[self.df_stop_locations['user'] == u]
@@ -212,7 +221,7 @@ class Load_location_reference:
                 span_s = max(timestamps_dep)-min(timestamps_arr)
 
                 state_point = {'hmdiff': self.__home_mean_diff(time_dist),
-                               'spread': self.__spread(timestamps_arr, int(span_s)),
+                               'days_active': self.__days_active(timestamps_arr, int(span_s)),
                                'span': (span_s)/86400,
                                'timespent': time_spent/(span_s),
                                '__dorm': lid.validate(loca_center),
@@ -226,11 +235,6 @@ class Load_location_reference:
             ds[str(u)] = u_states
             
             if u%5 == 0:
-                print u,
+                print u
 
         return ds
-
-
-    def main(self):
-        return self.location_reference
-

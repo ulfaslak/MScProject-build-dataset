@@ -28,6 +28,7 @@ class Load_timezone_reference:
         self.fileversion = hash(str(tc))%10000000
         
         self.ROOTPATH = os.path.abspath('').split('build_dataset')[0]
+        if self.ROOTPATH[-1] != "/": self.ROOTPATH += "/"
         
         if load_cached:
             try:

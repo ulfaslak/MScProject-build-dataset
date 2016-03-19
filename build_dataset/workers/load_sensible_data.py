@@ -25,6 +25,7 @@ def load(tc, dataset, load_cached=True, filtering=False, offset=True):
     df : Pandas Dataframe
     """
     ROOTPATH = os.path.abspath('').split('build_dataset')[0]
+    if ROOTPATH[-1] != "/": ROOTPATH += "/"
     
     def _filter_bt_special(df):
         is_phone = lambda x: (x & 0x001F00) == 0x000200
