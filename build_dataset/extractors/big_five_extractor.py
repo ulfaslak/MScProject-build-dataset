@@ -140,5 +140,5 @@ class Big_five_extractor:
         user_raw_value = loader.get_raw_value("user", user)
         bfi_values = self.dataset[user_raw_value]
         ocean = ['openness', 'conscientiousness', 'extraversion', 'aggreeableness', 'neuroticism']
-        return np.array([bfi_values[t] for k in ocean])
+        return np.array([bfi_values[t] for t in ocean])
 
