@@ -186,13 +186,13 @@ class Build_S:
 					signal.setitimer(signal.ITIMER_REAL,patience)
 					try:
 						# Minimal triangles
-						failed = "orig"
+						failed = "origz"
 						points_s_orig, min_tri_s_orig, tri_s_area_orig = self.__min_tri(Xpair_s_orig)
 						failed = "shuf"
 						points_s_shuf, min_tri_s_shuf, tri_s_area_shuf = self.__min_tri(Xpair_s_shuf)
 						signal.alarm(0)
-						patience = 1.5*(dt.now()-time_start).total_seconds()
-					except ValueError: 
+						patience = 3*(dt.now()-time_start).total_seconds()
+					except ValueError:
 						t+=1
 						signal.alarm(0)
 						loop_over.append(self.num_iter-1+t)
@@ -203,7 +203,7 @@ class Build_S:
 						continue
 					except AttributeError:
 						print "Failed for: %s" % failed
-						plt.figure(figsize=(6,6))
+						plt.figure(figsize=(6, 6))
 						plt.title("Distribution of points for which mintri calc fails")
 						if failed == "orig":
 							plt.scatter(Xpair_s_orig[:,0], Xpair_s_orig[:,1])
@@ -221,8 +221,8 @@ class Build_S:
 					areas_s_mintri_shuf.append(tri_s_area_shuf)
 					areas_s_convex_shuf.append(convexarea_shuf)
 
-					tri_points_s_orig[:,n-t] = toNumpy(min_tri_s_orig.points).reshape((6,1)).T
-					tri_points_s_shuf[:,n-t] = toNumpy(min_tri_s_shuf.points).reshape((6,1)).T
+					tri_points_s_orig[:,n-t] = toNumpy(min_tri_s_orig.points).reshape((6, 1)).T
+					tri_points_s_shuf[:,n-t] = toNumpy(min_tri_s_shuf.points).reshape((6, 1)).T
 
 				P[i,j] = np.mean(np.array(areas_s_mintri_orig) >= np.array(areas_s_mintri_shuf))
 				T[i,j] = np.mean(areas_s_mintri_shuf) / np.mean(areas_s_mintri_orig)
