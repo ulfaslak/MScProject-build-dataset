@@ -1,8 +1,6 @@
-from pareto_clustering.dependencies.point_location import min_triangle as mint
-from pareto_clustering.dependencies.point_location.geo.shapes import Point, Polygon
-from pareto_clustering.dependencies.point_location.geo.spatial import toNumpy, convexHull
-from pareto_clustering.dependencies.point_location.geo.drawer import plot
 from build_dataset.analysis.outlier_detection import Outlier_detector_svm
+from py_pcha.PCHA import PCHA
+from scipy.spatial import ConvexHull
 
 import numpy as np
 from datetime import datetime as dt
@@ -91,9 +89,9 @@ class Build_S:
 
 		# Change the behavior of SIGALRM
 		signal.signal(signal.SIGALRM, timeout_handler)
+	
 
-
-	def __clean_Xpair(self,Xpair):
+	def __clean_Xpair(self, Xpair):
 		"""Return pointset with outliers removed
 		"""
 		if self.remove_outliers:
@@ -105,22 +103,12 @@ class Build_S:
 			return Xpair, [], range(Xpair.shape[0])
 
 
-	def __min_tri(self, Xpair):
+	def __PCHA_tri(self, Xpair):
 		"""Compute min. triangle for set of points
 		"""
-		while True:
-			points = [Point(*tuple(p)) for p in Xpair]
-			min_tri = mint.minTriangle(Polygon(points))
-			area = min_tri.area()
-
-			# To correct for occational faulty "super small" area computed.
-			# In effect calling continue on the loop will cause the operation
-			# to timeout, and the subset to be skipped in bootstrapping.
-			if area < 0.001: continue
-
-			break
-
-		return points, min_tri, area
+		XC, _, _, _, _ = PCHA(Xpair.T, 3)
+		area = ConvexHull(XC.T).volume
+		return XC.T, area
 
 
 
@@ -130,14 +118,11 @@ class Build_S:
 		num_pairs = self.M*(self.M-1)/2
 
 		# Triangle computation time allowed
-		patience = 0.2
+		patience = 0.4
 
 		P = np.zeros((self.M, self.M))
 		T = np.zeros((self.M, self.M))
 		C = np.zeros((self.M, self.M))
-
-		compute_area = lambda P: abs((P[0]*(P[3]-P[5]) + P[2]*(P[5]-P[1]) + P[4]*(P[1]-P[3])) / 2.0)
-		compute_dist = lambda (P1,P2): np.sqrt((P1[0]-P2[0])**2 + (P1[1]-P2[1])**2)
 
 		pair_triangles_orig = {}
 		pair_triangles_shuf = {}
@@ -177,31 +162,22 @@ class Build_S:
 				t = 0
 				loop_over = range(self.num_iter)
 				for n in loop_over:
-					subset_indices = np.random.randint(0,Npair,size=int(self.Nsubset))
+					subset_indices = np.random.randint(0, Npair, size=int(self.Nsubset))
 
-					Xpair_s_orig = Xpair_orig[subset_indices,:]
-					Xpair_s_shuf = Xpair_shuf[subset_indices,:]
+					Xpair_s_orig = Xpair_orig[subset_indices, :]
+					Xpair_s_shuf = Xpair_shuf[subset_indices, :]
 
-					time_start = dt.now()
-					signal.setitimer(signal.ITIMER_REAL,patience)
 					try:
-						# Minimal triangles
-						failed = "origz"
-						points_s_orig, min_tri_s_orig, tri_s_area_orig = self.__min_tri(Xpair_s_orig)
+						print i, j, n
+						# PCHA triangles
+						failed = "orig"
+						min_tri_s_orig, tri_s_area_orig = self.__PCHA_tri(Xpair_s_orig)
 						failed = "shuf"
-						points_s_shuf, min_tri_s_shuf, tri_s_area_shuf = self.__min_tri(Xpair_s_shuf)
-						signal.alarm(0)
-						patience = 1.2*(dt.now()-time_start).total_seconds()
-					except ValueError:
-						t+=1
-						signal.alarm(0)
-						loop_over.append(self.num_iter-1+t)
-						continue
-					except TimeoutException: 
+						min_tri_s_shuf, tri_s_area_shuf = self.__PCHA_tri(Xpair_s_shuf)
+					except Exception as e:
+						print e
 						t+=1
 						loop_over.append(self.num_iter-1+t)
-						continue
-					except AttributeError:
 						print "Failed for: %s" % failed
 						plt.figure(figsize=(6, 6))
 						plt.title("Distribution of points for which mintri calc fails")
@@ -211,18 +187,18 @@ class Build_S:
 						else:
 							plt.scatter(Xpair_s_shuf[:,0], Xpair_s_shuf[:,1])
 							plt.show()
+						continue
 
-					# Convex hull area
-					convexarea_orig = convexHull(points_s_orig).area()
-					convexarea_shuf = convexHull(points_s_shuf).area()
+					convexarea_orig = ConvexHull(Xpair_s_orig).volume  # For a 2d case .volume is
+					convexarea_shuf = ConvexHull(Xpair_s_orig).volume  # and .area is circumference
 
 					areas_s_mintri_orig.append(tri_s_area_orig)
 					areas_s_convex_orig.append(convexarea_orig)
 					areas_s_mintri_shuf.append(tri_s_area_shuf)
 					areas_s_convex_shuf.append(convexarea_shuf)
 
-					tri_points_s_orig[:,n-t] = toNumpy(min_tri_s_orig.points).reshape((6, 1)).T
-					tri_points_s_shuf[:,n-t] = toNumpy(min_tri_s_shuf.points).reshape((6, 1)).T
+					tri_points_s_orig[:,n-t] = min_tri_s_orig.reshape((6, 1)).T
+					tri_points_s_shuf[:,n-t] = min_tri_s_shuf.reshape((6, 1)).T
 
 				P[i,j] = np.mean(np.array(areas_s_mintri_orig) >= np.array(areas_s_mintri_shuf))
 				T[i,j] = np.mean(areas_s_mintri_shuf) / np.mean(areas_s_mintri_orig)
