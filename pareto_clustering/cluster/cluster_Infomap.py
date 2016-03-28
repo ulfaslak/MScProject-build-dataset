@@ -43,8 +43,9 @@ def fit(T):
     no_clu = re.findall(r'\d+ \d+ \d\.\d+', network_clusters)  # ["1 2 0.00800543",...]
     no_clu = sorted([tuple(i.split()) for i in no_clu], key=lambda x: int(x[0]))
     communities_json = defaultdict(list)
-    for node, cluster, _ in no_clu:
+    indicator_flow = []
+    for node, cluster, flow in no_clu:
         communities_json[int(cluster)].append(int(node))
+        indicator_flow.append((int(node), float(flow)))
 
-    return communities_json
-
+    return communities_json, indicator_flow
