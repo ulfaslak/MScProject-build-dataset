@@ -11,12 +11,12 @@ def compute_thetas(X, A=None, penalty='consensus'):
             for j in range(5):
                 vals = [df.iloc[i, j] for df in dfs]
                 A[i, j] = np.median(vals)
-        return np.mat(A)
+        return A
 
     def _compute_W():
-        """Get weight matrix W."""
+        """Get weight array W."""
         if penalty == "consensus":
-            W = np.array(
+            W = 1.0 * np.array(
                 [[0, 1, 0, 1, 1],
                  [0, 0, 1, 1, 1],
                  [1, 1, 1, 1, 1],
@@ -24,7 +24,6 @@ def compute_thetas(X, A=None, penalty='consensus'):
                  [1, 1, 1, 1, 1],
                  [0, 0, 1, 0, 0]]
             )
-
         elif penalty in ['var', 'std']:
             W = np.empty((6, 5))
             for i, _ in enumerate(df_main.iterrows()):
@@ -35,11 +34,11 @@ def compute_thetas(X, A=None, penalty='consensus'):
             if penalty == 'var':
                 W = W ** 2
             W = 1 / W
-        
         else:
             W = np.ones((6, 5))
 
-        return W / np.mat(W.sum(axis=1)).T
+        
+        return W / W.sum(axis=1).reshape((-1, 1))
 
     def _dist(x, a, w):
         """Compute the WED between vector x from X and vector a from A.
@@ -47,7 +46,7 @@ def compute_thetas(X, A=None, penalty='consensus'):
         m_xa = 0
         for k in range(len(x)):
             m_xa += (x[k] - a[k])**2 * w[k]
-
+            
         return m_xa
 
 
@@ -67,12 +66,12 @@ def compute_thetas(X, A=None, penalty='consensus'):
 
         A = _compute_A()
         W = _compute_W()
-
+        
     elif X.shape[1] != A.shape[1]:
         raise TypeError('Datapoints and archetypes have different dimensions.')
     else:
         W = np.ones(A.shape)
-        W = W / np.mat(W.sum(axis=1)).T
+        W = W / W.sum(axis=1).reshape((-1, 1))
 
 
 
@@ -82,8 +81,8 @@ def compute_thetas(X, A=None, penalty='consensus'):
     for i in range(rows):
         x = X[i, :]
         for j in range(cols):
-            a = A[j, :].A[0]
-            w = W[j, :].A[0]
+            a = A[j, :]
+            w = W[j, :]
             M[i, j] = _dist(x, a, w)            
 
-    return M
+    return 1 - M/np.sum(M, axis=1).reshape((-1, 1))
