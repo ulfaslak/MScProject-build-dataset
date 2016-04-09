@@ -73,16 +73,15 @@ def compute_thetas(X, A=None, penalty='consensus'):
         W = np.ones(A.shape)
         W = W / W.sum(axis=1).reshape((-1, 1))
 
-
-
     rows, cols = X.shape[0], A.shape[0]
-    M = np.zeros((rows, cols))
+    D = np.zeros((rows, cols))
     
     for i in range(rows):
         x = X[i, :]
         for j in range(cols):
             a = A[j, :]
             w = W[j, :]
-            M[i, j] = _dist(x, a, w)            
-
-    return 1 - M/np.sum(M, axis=1).reshape((-1, 1))
+            D[i, j] = _dist(x, a, w)
+    
+    M = np.max(D, axis=1).reshape((-1, 1)) - D
+    return M * 1.0 / np.sum(M, axis=1).reshape((-1, 1))
