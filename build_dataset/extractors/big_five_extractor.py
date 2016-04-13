@@ -1,4 +1,3 @@
-from sensible_raw.loaders import loader
 import requests as rq
 import numpy as np
 import json
@@ -24,6 +23,7 @@ class Big_five_extractor:
                 dat = json.load(infile)
             print "[big_five_extractor] Loaded data from local copy!"
         except IOError:
+            from sensible_raw.loaders import loader
             if token == None:
                 raise Exception('You must provide a token.')
             print "[big_five_extractor] Loading data from API...",
