@@ -2,7 +2,28 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import scale
 
-def compute_thetas(X, A=None, penalty='consensus'):
+def compute_thetas(X, A=None, penalty='consensus', shuffle_arcs=False):
+    """Compute N x 6 matrix where columns correspond to BF archetype-wise inverse distance.
+
+    Parameters
+    ----------
+    X : N x 5 BF-value array
+
+    A : 6 x 5 archetype array
+
+    penalty : str
+        Either 'consensus', 'var', 'std', or None. Determines weights to put on distances
+        in each BF dimension when measuring inverse weighted euclidian distance.
+
+    shuffle_arcs : bool
+        Whether to shuffle arcs or not. Used as 'True' when testing validity of archetypes,
+        so default is False.
+    """
+    def _col_shuf(arr):
+        arr = arr.copy()
+        for i in range(arr.shape[1]):
+            np.random.shuffle(arr[:, i])
+        return arr
 
     def _compute_A():
         A = np.empty((6, 5))
@@ -11,6 +32,10 @@ def compute_thetas(X, A=None, penalty='consensus'):
             for j in range(5):
                 vals = [df.iloc[i, j] for df in dfs]
                 A[i, j] = np.median(vals)
+
+        if shuffle_arcs:
+            return _col_shuf(A)
+
         return A
 
     def _compute_W():
@@ -37,7 +62,6 @@ def compute_thetas(X, A=None, penalty='consensus'):
         else:
             W = np.ones((6, 5))
 
-        
         return W / W.sum(axis=1).reshape((-1, 1))
 
     def _dist(x, a, w):
@@ -46,10 +70,7 @@ def compute_thetas(X, A=None, penalty='consensus'):
         m_xa = 0
         for k in range(len(x)):
             m_xa += (x[k] - a[k])**2 * w[k]
-            
         return m_xa
-
-
 
     if A is None:  # Then build A from Big Five data
         if X.shape[1] != 5:
@@ -66,7 +87,7 @@ def compute_thetas(X, A=None, penalty='consensus'):
 
         A = _compute_A()
         W = _compute_W()
-        
+
     elif X.shape[1] != A.shape[1]:
         raise TypeError('Datapoints and archetypes have different dimensions.')
     else:
@@ -75,13 +96,13 @@ def compute_thetas(X, A=None, penalty='consensus'):
 
     rows, cols = X.shape[0], A.shape[0]
     D = np.zeros((rows, cols))
-    
+
     for i in range(rows):
         x = X[i, :]
         for j in range(cols):
             a = A[j, :]
             w = W[j, :]
             D[i, j] = _dist(x, a, w)
-    
+
     M = np.max(D, axis=1).reshape((-1, 1)) - D
     return M * 1.0 / np.sum(M, axis=1).reshape((-1, 1))
