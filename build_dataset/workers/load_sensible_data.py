@@ -40,7 +40,25 @@ def load(tc, dataset, load_cached=True, filtering=False, offset=True):
         df.to_pickle(ROOTPATH+'build_dataset/data_cache/%d%s.pickle' % (fileversion,dataset))
     
     def pull(spans, dataset):
-        """Pull touched datasets given time constraint."""
+        """Pull touched datasets given time constraint.
+        
+        The API delivers data in month-batches. This function returns at least
+        all data needed from the API.
+        
+        Parameters
+        ----------
+        spans : list of tuples
+            Each tuple is a range of dates that needs to be included, of the form:
+            [("06/01/14", "24/01/14"), ... ]
+        
+        dataset : str
+            >>> dataset in ["calllog", "sms", "screen", "stop_locations", "bluetooth"]
+            True
+                
+        Return
+        ------
+        df : pandas dataframe
+        """
         
         months_int = set(
             [item for sublist in 
@@ -55,7 +73,7 @@ def load(tc, dataset, load_cached=True, filtering=False, offset=True):
         months = [dt.strptime(str(m+1), '%m').strftime("%B").lower() for m 
                   in months_int]
 
-        years      = set(
+        years = set(
             [item for sublist in 
              [
                     range(
@@ -80,20 +98,22 @@ def load(tc, dataset, load_cached=True, filtering=False, offset=True):
         return df
 
     def correct_offset(df, time_constraint):
-        """Correct timestamps with respects to location."""
+        """Correct timestamps with respects to location and DST."""
         from build_dataset.analysis import timezone_reference as tzref
+        from build_dataset.analysis import dst_converter
         timezone_offset = tzref.Load_timezone_reference(time_constraint).timezone_offset
+        dst_converter = dst_converter.dst_converter
 
         df['timestamp'] = df['timestamp']/1000 + np.array(
-            [timezone_offset(u, ts)+1 for (u,ts) in zip(df['user'], df['timestamp']/1000)]
+            [timezone_offset(u, dst_converter(ts))+1 for (u,ts) in zip(df['user'], df['timestamp']/1000)]
             )*3600
         
         if dataset == "stop_locations":
             df['arrival'] += np.array(
-                [timezone_offset(u, ts)+1 for (u,ts) in zip(df['user'], df['arrival'])]
+                [timezone_offset(u, dst_converter(ts))+1 for (u,ts) in zip(df['user'], df['arrival'])]
             )*3600
             df['departure'] += np.array(
-                [timezone_offset(u, ts)+1 for (u,ts) in zip(df['user'], df['departure'])]
+                [timezone_offset(u, dst_converter(ts))+1 for (u,ts) in zip(df['user'], df['departure'])]
             )*3600
 
         return df
@@ -127,7 +147,7 @@ def load(tc, dataset, load_cached=True, filtering=False, offset=True):
     
     df = pull(tc['spans'], dataset)                        # Pull raw data
     if offset: df = correct_offset(df, tc)                 # Location offset
-    df = apply_tc(df, tc).sort(['timestamp'], ascending=1) # Strict time constraint
+    df = apply_tc(df, tc).sort(['timestamp'], ascending=1) # Filter wrt. time constraint
     
     if filtering == "bt_special":
         df = _filter_bt_special(df)
