@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import os
 
-
 def load(tc, dataset, load_cached=True, filtering=False, offset=True):
     """Load dataset in a given time frame.
     
