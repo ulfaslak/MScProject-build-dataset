@@ -76,7 +76,6 @@ def compute_thetas(X, A=None, penalty='consensus', shuffle_arcs=False):
         if X.shape[1] != 5:
             raise TypeError('Datapoints needs to have 5 columns.')
 
-        print "Computing Thetas from precomputed archetypes."
         df_main = pd.read_csv('build_dataset/data/archetypes.csv')
 
         dfs = [
