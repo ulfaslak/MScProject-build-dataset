@@ -46,58 +46,63 @@ class Big_five_extractor:
                           'enig': 3, 'meget_enig': 4}
 
         big5_map = {
-                    "bfi_talk": {"dim": "extraversion", "reversed": False},
-                    "bfi_error": {"dim": "aggreeableness", "reversed": True},
-                    "bfi_work": {"dim": "conscientiousness", "reversed": False},
-                    "bfi_depressed": {"dim": "neuroticism", "reversed": False},
-                    "bfi_original": {"dim": "openness", "reversed": False},
-                    "bfi_reserved": {"dim": "extraversion", "reversed": True},
-                    "bfi_helpfull": {"dim": "aggreeableness", "reversed": False},
-                    "bfi_careless": {"dim": "conscientiousness", "reversed": True},
-                    "bfi_relaxed": {"dim": "neuroticism", "reversed": True},
-                    "bfi_currious": {"dim": "openness", "reversed": False},
-                    "bfi_energi": {"dim": "extraversion", "reversed": False},
-                    "bfi_fight": {"dim": "aggreeableness", "reversed": True},
-                    "bfi_reliable": {"dim": "conscientiousness", "reversed": False},
-                    "bfi_tense": {"dim": "neuroticism", "reversed": False},
-                    "bfi_creative": {"dim": "openness", "reversed": False},
-                    "bfi_enthusiasm": {"dim": "extraversion", "reversed": False},
-                    "bfi_forgive": {"dim": "aggreeableness", "reversed": False},
-                    "bfi_disorderly": {"dim": "conscientiousness", "reversed": True},
-                    "bfi_worry": {"dim": "neuroticism", "reversed": False},
-                    "bfi_imagination": {"dim": "openness", "reversed": False},
-                    "bfi_quiet": {"dim": "extraversion", "reversed": True},
-                    "bfi_confident": {"dim": "aggreeableness", "reversed": False},
-                    "bfi_lazy": {"dim": "conscientiousness", "reversed": True},
-                    "bfi_stable": {"dim": "neuroticism", "reversed": True},
-                    "bfi_inventive": {"dim": "openness", "reversed": False},
-                    "bfi_strong_personality": {"dim": "extraversion", "reversed": False},
-                    "bfi_cold": {"dim": "aggreeableness", "reversed": True},
-                    "bfi_hold_on": {"dim": "conscientiousness", "reversed": False},
-                    "bfi_unbalanced": {"dim": "neuroticism", "reversed": False},
-                    "bfi_art": {"dim": "openness", "reversed": False},
-                    "bfi_shy": {"dim": "extraversion", "reversed": True},
-                    "bfi_caring": {"dim": "aggreeableness", "reversed": False},
-                    "bfi_effective": {"dim": "conscientiousness", "reversed": False},
-                    "bfi_calm": {"dim": "neuroticism", "reversed": True},
-                    "bfi_rutine": {"dim": "openness", "reversed": True},
-                    "bfi_social": {"dim": "extraversion", "reversed": False},
-                    "bfi_rude": {"dim": "aggreeableness", "reversed": True},
-                    "bf_complet": {"dim": "conscientiousness", "reversed": False},
-                    "bfi_nervous": {"dim": "conscientiousness", "reversed": False},
-                    "bfi_play": {"dim": "openness", "reversed": False},
-                    "bfi_few_art": {"dim": "openness", "reversed": True},
-                    "bfi_coorporation": {"dim": "aggreeableness", "reversed": False},
-                    "bfi_distract": {"dim": "conscientiousness", "reversed": True},
-                    "bfi_taste_art": {"dim": "openness", "reversed": False}
-                    }
+            "bfi_talk": {"dim": "extraversion", "reversed": False},
+            "bfi_error": {"dim": "aggreeableness", "reversed": True},
+            "bfi_work": {"dim": "conscientiousness", "reversed": False},
+            "bfi_depressed": {"dim": "neuroticism", "reversed": False},
+            "bfi_original": {"dim": "openness", "reversed": False},
+            "bfi_reserved": {"dim": "extraversion", "reversed": True},
+            "bfi_helpfull": {"dim": "aggreeableness", "reversed": False},
+            "bfi_careless": {"dim": "conscientiousness", "reversed": True},
+            "bfi_relaxed": {"dim": "neuroticism", "reversed": True},
+            "bfi_currious": {"dim": "openness", "reversed": False},
+            "bfi_energi": {"dim": "extraversion", "reversed": False},
+            "bfi_fight": {"dim": "aggreeableness", "reversed": True},
+            "bfi_reliable": {"dim": "conscientiousness", "reversed": False},
+            "bfi_tense": {"dim": "neuroticism", "reversed": False},
+            "bfi_creative": {"dim": "openness", "reversed": False},
+            "bfi_enthusiasm": {"dim": "extraversion", "reversed": False},
+            "bfi_forgive": {"dim": "aggreeableness", "reversed": False},
+            "bfi_disorderly": {"dim": "conscientiousness", "reversed": True},
+            "bfi_worry": {"dim": "neuroticism", "reversed": False},
+            "bfi_imagination": {"dim": "openness", "reversed": False},
+            "bfi_quiet": {"dim": "extraversion", "reversed": True},
+            "bfi_confident": {"dim": "aggreeableness", "reversed": False},
+            "bfi_lazy": {"dim": "conscientiousness", "reversed": True},
+            "bfi_stable": {"dim": "neuroticism", "reversed": True},
+            "bfi_inventive": {"dim": "openness", "reversed": False},
+            "bfi_strong_personality": {"dim": "extraversion", "reversed": False},
+            "bfi_cold": {"dim": "aggreeableness", "reversed": True},
+            "bfi_hold_on": {"dim": "conscientiousness", "reversed": False},
+            "bfi_unbalanced": {"dim": "neuroticism", "reversed": False},
+            "bfi_art": {"dim": "openness", "reversed": False},
+            "bfi_shy": {"dim": "extraversion", "reversed": True},
+            "bfi_caring": {"dim": "aggreeableness", "reversed": False},
+            "bfi_effective": {"dim": "conscientiousness", "reversed": False},
+            "bfi_calm": {"dim": "neuroticism", "reversed": True},
+            "bfi_rutine": {"dim": "openness", "reversed": True},
+            "bfi_social": {"dim": "extraversion", "reversed": False},
+            "bfi_rude": {"dim": "aggreeableness", "reversed": True},
+            "bf_complet": {"dim": "conscientiousness", "reversed": False},
+            "bfi_nervous": {"dim": "conscientiousness", "reversed": False},
+            "bfi_play": {"dim": "openness", "reversed": False},
+            "bfi_few_art": {"dim": "openness", "reversed": True},
+            "bfi_coorporation": {"dim": "aggreeableness", "reversed": False},
+            "bfi_distract": {"dim": "conscientiousness", "reversed": True},
+            "bfi_taste_art": {"dim": "openness", "reversed": False}
+        }
+        
+        self.ocean_order = ['openness', 'conscientiousness', 'extraversion', 'aggreeableness', 'neuroticism']   
+        self.big5_order = ["bfi_talk", "bfi_error", "bfi_work", "bfi_depressed", "bfi_original", "bfi_reserved", "bfi_helpfull", "bfi_careless", "bfi_relaxed", "bfi_currious", "bfi_energi", "bfi_fight", "bfi_reliable", "bfi_tense", "bfi_creative", "bfi_enthusiasm", "bfi_forgive", "bfi_disorderly", "bfi_worry", "bfi_imagination", "bfi_quiet", "bfi_confident", "bfi_lazy", "bfi_stable", "bfi_inventive", "bfi_strong_personality", "bfi_cold", "bfi_hold_on", "bfi_unbalanced", "bfi_art", "bfi_shy", "bfi_caring", "bfi_effective", "bfi_calm", "bfi_rutine", "bfi_social", "bfi_rude", "bfi_nervous", "bfi_play", "bfi_few_art", "bfi_coorporation", "bfi_distract", "bfi_taste_art"]
         
         dataset = {}
+        questio = {}
 
         for user, questions in bfi_dat.items():
             append_datapoint = True
             big5_vals = {"openness": [], "extraversion": [], "aggreeableness": [], "conscientiousness": [], "neuroticism": []}
 
+            x = {}
             for q, a in questions.items():
                 if a == u'':
                     append_datapoint = False
@@ -106,15 +111,19 @@ class Big_five_extractor:
                 rev = big5_map[q]['reversed']
                 if rev:
                     big5_vals[dim].append(4-response_codes[a[1:-1]])
+                    x[q] = 4-response_codes[a[1:-1]]
                 else:
                     big5_vals[dim].append(response_codes[a[1:-1]])
+                    x[q] = response_codes[a[1:-1]]
 
             if append_datapoint:
                 big5_vals = dict((k,np.mean(v)) for k,v in big5_vals.items())
                 dataset[user] = big5_vals
+            
+            questio[user] = x
                 
         self.dataset = dataset
-        
+        self.questio = questio
         
         
     def main(self, user):
@@ -140,6 +149,7 @@ class Big_five_extractor:
         """
         user_raw_value = loader.get_raw_value("user", user)
         bfi_values = self.dataset[user_raw_value]
-        ocean = ['openness', 'conscientiousness', 'extraversion', 'aggreeableness', 'neuroticism']
-        return np.array([bfi_values[t] for t in ocean])
+        que_values = self.questio[user_raw_value]
+        
+        return np.array([bfi_values[t] for t in self.ocean_order]), np.array([que_values[q] for q in self.big5_order])
 
