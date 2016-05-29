@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import scale
 
-def compute_thetas(X, A=None, penalty='consensus', shuffle_arcs=False):
+def compute_thetas(X, A=None, penalty='consensus', shuffle_arcs=False, return_D=False):
     """Compute N x 6 matrix where columns correspond to BF archetype-wise inverse distance.
 
     Parameters
@@ -102,6 +102,9 @@ def compute_thetas(X, A=None, penalty='consensus', shuffle_arcs=False):
             a = A[j, :]
             w = W[j, :]
             D[i, j] = _dist(x, a, w)
+            
+    if return_D:
+        return D
 
     M = np.max(D, axis=1).reshape((-1, 1)) - D
     return M * 1.0 / np.sum(M, axis=1).reshape((-1, 1))
