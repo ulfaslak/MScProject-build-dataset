@@ -43,10 +43,10 @@ def compute_thetas(X, A=None, penalty='consensus', shuffle_arcs=False, return_D=
         if penalty == "consensus":
             W = 1.0 * np.array(
                 [[0, 1, 0, 1, 1],
-                 [0, 0, 1, 1, 1],
+                 [0, 0, 1, 0, 1],
                  [1, 1, 1, 1, 1],
-                 [1, 1, 0, 1, 1],
-                 [1, 1, 1, 1, 1],
+                 [1, 1, 0, 0, 0],
+                 [1, 1, 1, 1, 0],
                  [0, 0, 1, 0, 0]]
             )
         elif penalty in ['var', 'std']:
