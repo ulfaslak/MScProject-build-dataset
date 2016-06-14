@@ -6,6 +6,6 @@ data_cache
 build_dataset_safe.ipynb
 *.m~
 build_dataset/playspace/records/*
-analysis/data/facebook
-analysis/data/MIDUS
-analysis/data/SAPA
+analysis/data/facebook/*
+analysis/data/MIDUS/*
+analysis/data/SAPA/*
