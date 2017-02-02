@@ -9,3 +9,4 @@ build_dataset/playspace/records/*
 analysis/data/facebook/*
 analysis/data/MIDUS/*
 analysis/data/SAPA/*
+build_dataset/data/*
